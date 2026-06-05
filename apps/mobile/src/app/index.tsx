@@ -2,8 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HomeMap } from '@/components/home-map';
-import { BottomTabInset } from '@/hooks/use-theme/theme.consts';
+import { HomeMap } from '@/components/map';
+import { BottomTabInset } from '@/constants/layout';
 
 const Pink = '#ff74b8';
 const Blue = '#5ba7ff';

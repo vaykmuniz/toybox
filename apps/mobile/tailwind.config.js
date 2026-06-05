@@ -6,6 +6,28 @@ module.exports = {
     extend: {
       colors: {
         ink: '#111111',
+        theme: {
+          background: {
+            DEFAULT: '#ffffff',
+            dark: '#000000',
+          },
+          element: {
+            DEFAULT: '#F0F0F3',
+            dark: '#212225',
+          },
+          selected: {
+            DEFAULT: '#E0E1E6',
+            dark: '#2E3135',
+          },
+          text: {
+            DEFAULT: '#000000',
+            dark: '#ffffff',
+          },
+          secondary: {
+            DEFAULT: '#60646C',
+            dark: '#B0B4BA',
+          },
+        },
         toybox: {
           blue: '#5ba7ff',
           pink: '#ff74b8',

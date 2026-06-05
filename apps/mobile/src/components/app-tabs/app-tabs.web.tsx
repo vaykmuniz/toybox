@@ -2,8 +2,6 @@ import type { Href } from 'expo-router';
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
 import { Pressable, Text, View } from 'react-native';
 
-import { useTheme } from '@/hooks/use-theme/use-theme';
-
 export default function AppTabs() {
   return (
     <Tabs>
@@ -28,14 +26,14 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
       <View
         className={
           isFocused
-            ? 'rounded-2xl bg-[#E0E1E6] px-4 py-1 dark:bg-[#2E3135]'
-            : 'rounded-2xl bg-[#F0F0F3] px-4 py-1 dark:bg-[#212225]'
+            ? 'rounded-2xl bg-theme-selected px-4 py-1 dark:bg-theme-selected-dark'
+            : 'rounded-2xl bg-theme-element px-4 py-1 dark:bg-theme-element-dark'
         }>
         <Text
           className={
             isFocused
-              ? 'text-sm font-medium leading-5 text-black dark:text-white'
-              : 'text-sm font-medium leading-5 text-[#60646C] dark:text-[#B0B4BA]'
+              ? 'text-sm font-medium leading-5 text-theme-text dark:text-theme-text-dark'
+              : 'text-sm font-medium leading-5 text-theme-secondary dark:text-theme-secondary-dark'
           }>
           {children}
         </Text>
@@ -45,19 +43,15 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
 }
 
 export function ProfileTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
-  const theme = useTheme();
-
   return (
     <Pressable {...props} accessibilityLabel="Profile" className="active:opacity-70">
       <View
-        className="h-10 w-10 items-center justify-center rounded-full border-2"
-        style={[
-          {
-            backgroundColor: isFocused ? theme.backgroundSelected : theme.backgroundElement,
-            borderColor: isFocused ? theme.text : theme.textSecondary,
-          },
-        ]}>
-        <View className="h-5 w-5 rounded-full opacity-45" style={{ backgroundColor: theme.textSecondary }} />
+        className={
+          isFocused
+            ? 'h-10 w-10 items-center justify-center rounded-full border-2 border-theme-text bg-theme-selected dark:border-theme-text-dark dark:bg-theme-selected-dark'
+            : 'h-10 w-10 items-center justify-center rounded-full border-2 border-theme-secondary bg-theme-element dark:border-theme-secondary-dark dark:bg-theme-element-dark'
+        }>
+        <View className="h-5 w-5 rounded-full bg-theme-secondary opacity-45 dark:bg-theme-secondary-dark" />
       </View>
     </Pressable>
   );
@@ -68,7 +62,7 @@ export function CustomTabList(props: TabListProps) {
     <View
       {...props}
       className="absolute bottom-0 w-full flex-row items-center justify-center p-4">
-      <View className="w-full max-w-content flex-row items-center justify-center gap-2 rounded-[32px] bg-[#F0F0F3] px-8 py-2 dark:bg-[#212225]">
+      <View className="w-full max-w-content flex-row items-center justify-center gap-2 rounded-[32px] bg-theme-element px-8 py-2 dark:bg-theme-element-dark">
         {props.children}
       </View>
     </View>

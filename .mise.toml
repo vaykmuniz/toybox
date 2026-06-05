@@ -25,20 +25,7 @@ run = "pnpm run dev"
 
 [tasks."dev:mobile"]
 description = "Run the Expo development server"
-run = "pnpm --filter @toybox/mobile start -- --tunnel"
-
-[tasks."dev:mobile:lan"]
-description = "Run Expo for a physical phone on the same LAN; set EXPO_LAN_IP first"
-run = '''
-if [ -z "$EXPO_LAN_IP" ]; then
-  echo "Set EXPO_LAN_IP to your computer's LAN IP, for example: EXPO_LAN_IP=192.168.1.20 mise run dev:mobile:lan"
-  exit 1
-fi
-
-REACT_NATIVE_PACKAGER_HOSTNAME="$EXPO_LAN_IP" \
-EXPO_PUBLIC_API_URL="http://$EXPO_LAN_IP:$API_PORT" \
-pnpm --filter @toybox/mobile start
-'''
+run = "pnpm --filter @toybox/mobile start -c --tunnel"
 
 [tasks."dev:api"]
 description = "Run the FastAPI development server"
