@@ -1,19 +1,20 @@
+import type { Href } from 'expo-router';
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
-import { Pressable, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { ThemedText } from './themed/themed-text';
-import { ThemedView } from './themed/themed-view';
-
-import { MaxContentWidth, Spacing } from '@/hooks/use-theme/theme.consts';
+import { useTheme } from '@/hooks/use-theme/use-theme';
 
 export default function AppTabs() {
   return (
     <Tabs>
-      <TabSlot style={{ height: '100%' }} />
+      <TabSlot className="h-full" />
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="home" href="/" asChild>
             <TabButton>Home</TabButton>
+          </TabTrigger>
+          <TabTrigger name="profile" href={'/profile' as Href} asChild>
+            <ProfileTabButton />
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -23,55 +24,53 @@ export default function AppTabs() {
 
 export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
-        style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+    <Pressable {...props} className="active:opacity-70">
+      <View
+        className={
+          isFocused
+            ? 'rounded-2xl bg-[#E0E1E6] px-4 py-1 dark:bg-[#2E3135]'
+            : 'rounded-2xl bg-[#F0F0F3] px-4 py-1 dark:bg-[#212225]'
+        }>
+        <Text
+          className={
+            isFocused
+              ? 'text-sm font-medium leading-5 text-black dark:text-white'
+              : 'text-sm font-medium leading-5 text-[#60646C] dark:text-[#B0B4BA]'
+          }>
           {children}
-        </ThemedText>
-      </ThemedView>
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+export function ProfileTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
+  const theme = useTheme();
+
+  return (
+    <Pressable {...props} accessibilityLabel="Profile" className="active:opacity-70">
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full border-2"
+        style={[
+          {
+            backgroundColor: isFocused ? theme.backgroundSelected : theme.backgroundElement,
+            borderColor: isFocused ? theme.text : theme.textSecondary,
+          },
+        ]}>
+        <View className="h-5 w-5 rounded-full opacity-45" style={{ backgroundColor: theme.textSecondary }} />
+      </View>
     </Pressable>
   );
 }
 
 export function CustomTabList(props: TabListProps) {
   return (
-    <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
+    <View
+      {...props}
+      className="absolute bottom-0 w-full flex-row items-center justify-center p-4">
+      <View className="w-full max-w-content flex-row items-center justify-center gap-2 rounded-[32px] bg-[#F0F0F3] px-8 py-2 dark:bg-[#212225]">
         {props.children}
-      </ThemedView>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  tabListContainer: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    padding: Spacing.three,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  innerContainer: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.five,
-    borderRadius: Spacing.five,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  tabButtonView: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-  },
-});
