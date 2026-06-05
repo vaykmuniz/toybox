@@ -1,0 +1,88 @@
+[tools]
+node = "22.22.0"
+pnpm = "10.19.0"
+python = "3.12"
+uv = "latest"
+
+[env]
+API_HOST = "0.0.0.0"
+API_PORT = "8000"
+DATABASE_URL = "postgresql://toybox:toybox@localhost:5432/toybox"
+EXPO_PUBLIC_API_URL = "http://localhost:8000"
+
+[tasks.install]
+description = "Install all workspace dependencies"
+run = [
+  "pnpm install",
+  "uv sync --project apps/api",
+  "uv sync --project apps/migrations"
+]
+
+[tasks.dev]
+description = "Run Postgres, FastAPI, and Expo together"
+depends = ["db:up"]
+run = "pnpm run dev"
+
+[tasks."dev:mobile"]
+description = "Run the Expo development server"
+run = "pnpm --filter @toybox/mobile start -- --tunnel"
+
+[tasks."dev:mobile:lan"]
+description = "Run Expo for a physical phone on the same LAN; set EXPO_LAN_IP first"
+run = '''
+if [ -z "$EXPO_LAN_IP" ]; then
+  echo "Set EXPO_LAN_IP to your computer's LAN IP, for example: EXPO_LAN_IP=192.168.1.20 mise run dev:mobile:lan"
+  exit 1
+fi
+
+REACT_NATIVE_PACKAGER_HOSTNAME="$EXPO_LAN_IP" \
+EXPO_PUBLIC_API_URL="http://$EXPO_LAN_IP:$API_PORT" \
+pnpm --filter @toybox/mobile start
+'''
+
+[tasks."dev:api"]
+description = "Run the FastAPI development server"
+run = "uv run --project apps/api uvicorn toybox_api.main:app --host $API_HOST --port $API_PORT --reload"
+
+[tasks."db:up"]
+description = "Start local Postgres"
+run = "docker compose up -d postgres"
+
+[tasks."db:down"]
+description = "Stop local Postgres"
+run = "docker compose down"
+
+[tasks."db:logs"]
+description = "Tail local Postgres logs"
+run = "docker compose logs -f postgres"
+
+[tasks."db:reset"]
+description = "Reset local Postgres data"
+run = "docker compose down --volumes --remove-orphans && docker compose up -d postgres"
+
+[tasks."db:migrate"]
+description = "Run Alembic migrations"
+run = "uv run --project apps/migrations alembic -c apps/migrations/alembic.ini upgrade head"
+
+[tasks."db:revision"]
+description = "Create a manual Alembic migration; pass MESSAGE='describe change'"
+run = "uv run --project apps/migrations alembic -c apps/migrations/alembic.ini revision -m \"$MESSAGE\""
+
+[tasks."db:current"]
+description = "Show the current Alembic migration revision"
+run = "uv run --project apps/migrations alembic -c apps/migrations/alembic.ini current"
+
+[tasks.test]
+description = "Run mobile typecheck and API tests"
+run = [
+  "pnpm run test",
+  "uv run --project apps/api pytest"
+]
+
+[tasks.lint]
+description = "Run mobile and API linters"
+run = [
+  "pnpm run lint",
+  "uv run --project apps/api ruff check .",
+  "uv run --project apps/migrations ruff check ."
+]
