@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import Card from '@/components/ui/card/card.component';
 import CustomImage from '@/components/ui/custom-image/custom-image.component';
 import { Toy } from '@/hooks/use-get-profile.hook';
+import { ProfileBadgeList } from './profile-badge-list.component';
 
 type ProfileToyGridProps = {
   toys: Toy[];

@@ -25,7 +25,7 @@ run = "pnpm run dev"
 
 [tasks."dev:mobile"]
 description = "Run the Expo development server"
-run = "pnpm --filter @toybox/mobile start -c --tunnel"
+run = "EXPO_NO_DEVTOOLS=1 pnpm --filter @toybox/mobile start -c --tunnel"
 
 [tasks."dev:api"]
 description = "Run the FastAPI development server"

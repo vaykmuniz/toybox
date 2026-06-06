@@ -58,7 +58,7 @@ export default function NavigationBar() {
         {profile?.avatar_url && (
           <NativeTabs.Trigger.Icon
             renderingMode="original"
-            src={{ uri: profile.avatar_url } as ImageSourcePropType}
+            src={require('@/assets/images/tabIcons/home.png')}
           />
         )}
       </NativeTabs.Trigger>

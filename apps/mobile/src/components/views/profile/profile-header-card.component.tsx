@@ -14,8 +14,8 @@ type ProfileHeaderCardProps = {
 
 export function ProfileHeaderCard({ className, profile }: ProfileHeaderCardProps) {
   return (
-    <Card className={`space-y-5${className ? ` ${className}` : ''}`}>
-      <View className="flex-row flex-wrap items-center space-x-4">
+    <Card className={`gap-5 ${className ? ` ${className}` : ''}`}>
+      <View className="flex-row flex-wrap items-center space-x-4 mb-2 pb-4">
         <Avatar
           accessibilityLabel={`${profile.name} profile photo`}
           size="md"
@@ -34,8 +34,9 @@ export function ProfileHeaderCard({ className, profile }: ProfileHeaderCardProps
         </View>
       </View>
 
-      <ProfileStats stats={profile.stats} />
       <ProfileBadgeList badges={profile.badges} />
+
+      <ProfileStats stats={profile.stats} />
     </Card>
   );
 }
