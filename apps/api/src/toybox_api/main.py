@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from toybox_api.controllers import feed, health
+from toybox_api.controllers import feed, health, profile
 
 app = FastAPI(title="Toybox API")
 StaticDirectory = Path(__file__).parent / "static"
@@ -19,3 +19,4 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=StaticDirectory), name="static")
 app.include_router(health.router)
 app.include_router(feed.router)
+app.include_router(profile.router)

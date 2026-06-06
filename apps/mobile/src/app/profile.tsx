@@ -1,34 +1,43 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ProfileHeaderCard, ProfileToyGrid } from '@/components/views/profile';
 import { useGetProfile } from '@/hooks/use-get-profile.hook';
 
-const Pink = '#ff74b8';
-const Blue = '#5ba7ff';
-
 export default function ProfileScreen() {
-  const profile = useGetProfile();
+  const profileRequest = useGetProfile();
+  const showLoading = profileRequest.isLoading && !profileRequest.profile;
+  const showError = profileRequest.error && !profileRequest.profile;
 
   return (
-    <View className="flex-1 bg-toybox-blue">
-      <LinearGradient
-        colors={[Pink, Blue]}
-        end={{ x: 0.8, y: 1 }}
-        start={{ x: 0.8, y: 0 }}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
-      />
-      <View className="flex-1" style={{ zIndex: 1 }}>
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="p-5"
-          showsVerticalScrollIndicator={false}>
-          <View className="gap-5">
-            <ProfileHeaderCard profile={profile} />
-            <ProfileToyGrid toys={profile.toys} />
+    <View className="flex-1" style={{ zIndex: 1 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow p-5"
+        showsVerticalScrollIndicator={false}>
+        {showLoading ? (
+          <View className="flex-1 items-center justify-center gap-4">
+            <ActivityIndicator color="white" size="large" />
+            <Text className="font-display text-base font-bold text-white">Loading profile</Text>
           </View>
-        </ScrollView>
-      </View>
+        ) : showError ? (
+          <View className="flex-1 items-center justify-center gap-4 px-6">
+            <Text className="text-center font-display text-xl font-bold text-white">
+              Profile unavailable
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              className="rounded-full bg-white px-5 py-3"
+              onPress={profileRequest.refetch}>
+              <Text className="font-display text-sm font-bold text-ink">Try again</Text>
+            </Pressable>
+          </View>
+        ) : profileRequest.profile ? (
+          <View className="gap-5">
+            <ProfileHeaderCard profile={profileRequest.profile} />
+            <ProfileToyGrid toys={profileRequest.profile.toys} />
+          </View>
+        ) : null}
+      </ScrollView>
     </View>
   );
 }

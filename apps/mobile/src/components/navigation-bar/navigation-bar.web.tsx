@@ -50,7 +50,7 @@ export function TabButton({ children, className, isFocused, ...props }: TabButto
 }
 
 export function ProfileTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
-  const profile = useGetProfile();
+  const { profile } = useGetProfile();
 
   return (
     <Pressable {...props} accessibilityLabel="Profile" className="active:opacity-70">
@@ -60,12 +60,14 @@ export function ProfileTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
             ? 'h-10 w-10 items-center justify-center rounded-full border-2 border-theme-text bg-theme-selected dark:border-theme-text-dark dark:bg-theme-selected-dark'
             : 'h-10 w-10 items-center justify-center rounded-full border-2 border-theme-secondary bg-theme-element dark:border-theme-secondary-dark dark:bg-theme-element-dark'
         }>
-        <Avatar
-          accessibilityLabel={`${profile.name} profile photo`}
-          className="border-0"
-          size="xs"
-          source={profile.avatar_url}
-        />
+        {profile ? (
+          <Avatar
+            accessibilityLabel={`${profile.name} profile photo`}
+            className="border-0"
+            size="xs"
+            source={profile.avatar_url}
+          />
+        ) : null}
       </View>
     </Pressable>
   );

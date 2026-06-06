@@ -2,7 +2,6 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import type { NativeTabsProps } from 'expo-router/unstable-native-tabs';
 import { cssInterop } from 'nativewind';
 import type { ComponentType } from 'react';
-import type { ImageSourcePropType } from 'react-native';
 
 import { useGetProfile } from '@/hooks/use-get-profile.hook';
 
@@ -39,7 +38,7 @@ const StyledNativeTabs = createNativeTabsInterop(NativeTabs, {
 });
 
 export default function NavigationBar() {
-  const profile = useGetProfile();
+  const { profile } = useGetProfile();
 
   return (
     <StyledNativeTabs
