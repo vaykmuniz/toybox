@@ -47,7 +47,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "tsc --noEmit && pnpm run test:unit",
-    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs"
+    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/hooks/__tests__/use-get-feed.test.cjs"
   },
   "private": true
 }
