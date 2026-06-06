@@ -1,69 +1,67 @@
-import type { ImageProps } from 'expo-image';
+import { useCallback, useEffect, useState } from 'react';
 
-type FeedImageSource = ImageProps['source'];
+import { fetchFeed, type GetFeed } from '@/services/feed-api';
+export type { FeedAuthor, FeedItem, GetFeed } from '@/services/feed-api';
 
-export interface GetFeed {
-  items: FeedItem[];
+export interface GetFeedResult extends GetFeed {
+  error: Error | null;
+  isLoading: boolean;
+  refetch: () => Promise<void>;
 }
 
-export interface FeedItem {
-  id: string;
-  author: FeedAuthor;
-  media_url: FeedImageSource;
-  caption: string;
-  location: string;
-  posted_at: string;
-}
+const normalizeFeedError = (fetchError: unknown) => {
+  return fetchError instanceof Error ? fetchError : new Error('Failed to fetch feed');
+};
 
-export interface FeedAuthor {
-  id: string;
-  name: string;
-  handle: string;
-  avatar_url: FeedImageSource;
-}
+export const useGetFeed = (): GetFeedResult => {
+  const [feed, setFeed] = useState<GetFeed>({ items: [] });
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export const useGetFeed = (): GetFeed => {
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      setFeed(await fetchFeed());
+    } catch (fetchError) {
+      console.log(fetchError);
+      setError(normalizeFeedError(fetchError));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchFeed()
+      .then((nextFeed) => {
+        if (isMounted) {
+          setFeed(nextFeed);
+        }
+      })
+      .catch((fetchError) => {
+        console.log(fetchError);
+        if (isMounted) {
+          setError(normalizeFeedError(fetchError));
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return {
-    items: [
-      {
-        id: 'feed-1',
-        author: {
-          id: 'user-1',
-          name: 'Gabriel',
-          handle: '@gabriel',
-          avatar_url: require('@/assets/images/mocks/avatar.png'),
-        },
-        media_url: require('@/assets/images/mocks/toy-1.png'),
-        caption: 'Newest pull found a spot on the shelf.',
-        location: 'Sao Paulo, BR',
-        posted_at: '2026-06-06T12:00:00.000Z',
-      },
-      {
-        id: 'feed-2',
-        author: {
-          id: 'user-2',
-          name: 'Lia',
-          handle: '@lia_collects',
-          avatar_url: require('@/assets/images/mocks/avatar.png'),
-        },
-        media_url: require('@/assets/images/mocks/toy-5.png'),
-        caption: 'Desk buddy rotation for the week.',
-        location: 'Curitiba, BR',
-        posted_at: '2026-06-05T18:30:00.000Z',
-      },
-      {
-        id: 'feed-3',
-        author: {
-          id: 'user-3',
-          name: 'Nico',
-          handle: '@tinyworlds',
-          avatar_url: require('@/assets/images/mocks/avatar.png'),
-        },
-        media_url: require('@/assets/images/mocks/toy-9.png'),
-        caption: 'Collection wall finally has room for one more.',
-        location: 'Porto Alegre, BR',
-        posted_at: '2026-06-04T21:15:00.000Z',
-      },
-    ],
+    ...feed,
+    error,
+    isLoading,
+    refetch,
   };
 };

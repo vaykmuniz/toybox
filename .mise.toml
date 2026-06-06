@@ -23,9 +23,24 @@ description = "Run Postgres, FastAPI, and Expo together"
 depends = ["db:up"]
 run = "pnpm run dev"
 
+[tasks."dev:lan"]
+description = "Run Postgres, FastAPI, and Expo for a physical phone using this computer's LAN IP"
+depends = ["db:up"]
+run = '''
+test -n "$EXPO_LAN_IP" || (echo "Set EXPO_LAN_IP to this computer's LAN IP, for example: EXPO_LAN_IP=192.168.1.20 mise run dev:lan" >&2; exit 1)
+concurrently -n api,mobile -c blue,green "uv run --project apps/api uvicorn toybox_api.main:app --host $API_HOST --port $API_PORT --reload" "EXPO_PUBLIC_API_URL=http://$EXPO_LAN_IP:$API_PORT pnpm --filter @toybox/mobile start:lan"
+'''
+
 [tasks."dev:mobile"]
 description = "Run the Expo development server"
-run = "EXPO_NO_DEVTOOLS=1 pnpm --filter @toybox/mobile start -c --tunnel"
+run = "pnpm --filter @toybox/mobile start:lan"
+
+[tasks."dev:mobile:lan"]
+description = "Run Expo for a physical phone using this computer's LAN IP"
+run = '''
+test -n "$EXPO_LAN_IP" || (echo "Set EXPO_LAN_IP to this computer's LAN IP, for example: EXPO_LAN_IP=192.168.1.20 mise run dev:mobile:lan" >&2; exit 1)
+EXPO_PUBLIC_API_URL="http://$EXPO_LAN_IP:$API_PORT" pnpm --filter @toybox/mobile start:lan
+'''
 
 [tasks."dev:api"]
 description = "Run the FastAPI development server"

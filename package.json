@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "scripts": {
-    "dev": "concurrently -n api,mobile -c blue,green \"uv run --project apps/api uvicorn toybox_api.main:app --host ${API_HOST:-0.0.0.0} --port ${API_PORT:-8000} --reload\" \"pnpm --filter @toybox/mobile start\"",
+    "dev": "concurrently -n api,mobile -c blue,green \"uv run --project apps/api uvicorn toybox_api.main:app --host ${API_HOST:-0.0.0.0} --port ${API_PORT:-8000} --reload\" \"pnpm --filter @toybox/mobile start:lan\"",
     "lint": "pnpm --filter @toybox/mobile lint",
     "test": "pnpm --filter @toybox/mobile test"
   },

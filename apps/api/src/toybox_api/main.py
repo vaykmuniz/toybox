@@ -1,20 +1,21 @@
-from typing import Annotated
+from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from toybox_api.config import Settings, get_settings
-from toybox_api.db import check_database
+from toybox_api.controllers import feed, health
 
 app = FastAPI(title="Toybox API")
-SettingsDependency = Annotated[Settings, Depends(get_settings)]
+StaticDirectory = Path(__file__).parent / "static"
 
-
-@app.get("/health")
-async def health(settings: SettingsDependency) -> dict[str, str]:
-    return {"status": "ok", "service": settings.api_name}
-
-
-@app.get("/health/db")
-async def database_health(settings: SettingsDependency) -> dict[str, str]:
-    healthy = await check_database(settings)
-    return {"status": "ok" if healthy else "error"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+app.mount("/static", StaticFiles(directory=StaticDirectory), name="static")
+app.include_router(health.router)
+app.include_router(feed.router)

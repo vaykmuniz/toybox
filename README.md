@@ -56,12 +56,41 @@ EXPO_LAN_IP=192.168.1.20 mise run dev:mobile:lan
 Replace `192.168.1.20` with your computer's LAN IP. In WSL, use the Windows host
 LAN IP that your phone can reach, not `localhost` and usually not the WSL-only IP.
 The LAN task also sets `EXPO_PUBLIC_API_URL` to `http://$EXPO_LAN_IP:8000`, so
-mobile API requests do not point at the phone's own `localhost`.
+mobile API requests do not point at the phone's own `localhost`. It starts Expo
+in LAN mode, so the QR code should show a LAN URL instead of an `exp.direct`
+tunnel URL.
+
+Before opening the app on the phone, confirm the API is reachable from the phone
+browser:
+
+```bash
+http://192.168.1.20:8000/health
+```
+
+If that URL does not return JSON on the phone, fix the LAN IP, firewall, router,
+or WSL port forwarding first; the app cannot load the feed until the phone can
+reach the API.
+
+Do not use the Expo tunnel host, such as `*.exp.direct`, as the API host. The
+tunnel points the phone at Metro on port `8081`; it does not expose FastAPI on
+port `8000`.
+
+For Android emulator networking, use the emulator host alias instead:
+
+```bash
+EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 mise run dev:mobile
+```
 
 Or run the stack together:
 
 ```bash
 mise run dev
+```
+
+For the full stack with a physical phone, use the LAN task instead:
+
+```bash
+EXPO_LAN_IP=192.168.1.20 mise run dev:lan
 ```
 
 If React Native DevTools fails in WSL with a missing `libnspr4.so`, install the
