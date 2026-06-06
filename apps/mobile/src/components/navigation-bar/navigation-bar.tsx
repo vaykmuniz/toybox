@@ -2,6 +2,9 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import type { NativeTabsProps } from 'expo-router/unstable-native-tabs';
 import { cssInterop } from 'nativewind';
 import type { ComponentType } from 'react';
+import type { ImageSourcePropType } from 'react-native';
+
+import { useGetProfile } from '@/hooks/use-get-profile.hook';
 
 type StyledNativeTabsProps = NativeTabsProps & {
   className?: string;
@@ -35,7 +38,9 @@ const StyledNativeTabs = createNativeTabsInterop(NativeTabs, {
   },
 });
 
-export default function AppTabs() {
+export default function NavigationBar() {
+  const profile = useGetProfile();
+
   return (
     <StyledNativeTabs
       className="bg-theme-background dark:bg-theme-background-dark"
@@ -50,7 +55,12 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Label hidden>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.crop.circle" md="account_circle" />
+        {profile?.avatar_url && (
+          <NativeTabs.Trigger.Icon
+            renderingMode="original"
+            src={{ uri: profile.avatar_url } as ImageSourcePropType}
+          />
+        )}
       </NativeTabs.Trigger>
     </StyledNativeTabs>
   );

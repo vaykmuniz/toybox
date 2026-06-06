@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HomeMap } from '@/components/map';
+import { Map } from '@/components/map';
 import { BottomTabInset } from '@/constants/layout';
 
 const Pink = '#ff74b8';
@@ -21,7 +21,7 @@ export default function HomeScreen() {
         className="flex-1 px-6 pt-4"
         style={{ paddingBottom: BottomTabInset + 16 }}>
         <View className="flex-1 overflow-hidden rounded-2xl bg-white/35">
-          <HomeMap />
+          <Map />
         </View>
         <View className="flex-1 items-center justify-center">
           <Text className="font-display text-[40px] font-bold leading-[48px] text-ink">Home</Text>

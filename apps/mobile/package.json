@@ -46,7 +46,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "tsc --noEmit"
+    "test": "tsc --noEmit && pnpm run test:unit",
+    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs"
   },
   "private": true
 }

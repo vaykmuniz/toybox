@@ -12,6 +12,9 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
-    "expo-dev-client": "~56.0.18"
+    "codex": "^0.2.3",
+    "expo-dev-client": "~56.0.18",
+    "nvm": "^0.0.4",
+    "pnpm": "^11.5.2"
   }
 }

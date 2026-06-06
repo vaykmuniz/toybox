@@ -1,1 +1,1 @@
-export { HomeMap } from './home-map';
+export { Map } from './map';

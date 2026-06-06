@@ -2,7 +2,10 @@ import type { Href } from 'expo-router';
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
 import { Pressable, Text, View } from 'react-native';
 
-export default function AppTabs() {
+import Avatar from '@/components/ui/avatar/avatar.component';
+import { useGetProfile } from '@/hooks/use-get-profile.hook';
+
+export default function NavigationBar() {
   return (
     <Tabs>
       <TabSlot className="h-full" />
@@ -20,9 +23,13 @@ export default function AppTabs() {
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+type TabButtonProps = TabTriggerSlotProps & {
+  className?: string;
+};
+
+export function TabButton({ children, className, isFocused, ...props }: TabButtonProps) {
   return (
-    <Pressable {...props} className="active:opacity-70">
+    <Pressable {...props} className={`active:opacity-70${className ? ` ${className}` : ''}`}>
       <View
         className={
           isFocused
@@ -43,6 +50,8 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
 }
 
 export function ProfileTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
+  const profile = useGetProfile();
+
   return (
     <Pressable {...props} accessibilityLabel="Profile" className="active:opacity-70">
       <View
@@ -51,7 +60,12 @@ export function ProfileTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
             ? 'h-10 w-10 items-center justify-center rounded-full border-2 border-theme-text bg-theme-selected dark:border-theme-text-dark dark:bg-theme-selected-dark'
             : 'h-10 w-10 items-center justify-center rounded-full border-2 border-theme-secondary bg-theme-element dark:border-theme-secondary-dark dark:bg-theme-element-dark'
         }>
-        <View className="h-5 w-5 rounded-full bg-theme-secondary opacity-45 dark:bg-theme-secondary-dark" />
+        <Avatar
+          accessibilityLabel={`${profile.name} profile photo`}
+          className="border-0"
+          size="xs"
+          source={profile.avatar_url}
+        />
       </View>
     </Pressable>
   );
@@ -62,7 +76,7 @@ export function CustomTabList(props: TabListProps) {
     <View
       {...props}
       className="absolute bottom-0 w-full flex-row items-center justify-center p-4">
-      <View className="w-full max-w-content flex-row items-center justify-center gap-2 rounded-[32px] bg-theme-element px-8 py-2 dark:bg-theme-element-dark">
+      <View className="w-full max-w-content flex-row items-center justify-center space-x-2 rounded-3xl bg-theme-element px-8 py-2 dark:bg-theme-element-dark">
         {props.children}
       </View>
     </View>

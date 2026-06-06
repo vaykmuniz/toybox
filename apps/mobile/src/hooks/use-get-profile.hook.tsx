@@ -1,27 +1,31 @@
-interface GetProfile {
+import type { ImageProps } from 'expo-image';
+
+type ProfileImageSource = ImageProps['source'];
+
+export interface GetProfile {
   id: string;
   name: string;
   handle: string;
-  avatar_url: string;
+  avatar_url: ProfileImageSource;
   bio: string;
   stats: ProfileStats;
   badges: Badge[];
   toys: Toy[];
 }
 
-interface ProfileStats {
+export interface ProfileStats {
   posts: number;
   followers: number;
   following: number;
 }
 
-interface Toy {
+export interface Toy {
   id: string;
-  media_url: string;
+  media_url: ProfileImageSource;
   caption?: string;
 }
 
-interface Badge {
+export interface Badge {
   description: string;
   text: string;
 }
@@ -31,7 +35,7 @@ export const useGetProfile = (): GetProfile => {
     id: '1',
     name: 'Gabriel',
     handle: '@gabriel',
-    avatar_url: 'https://picsum.photos/seed/toybox-avatar/300/300',
+    avatar_url: require('@/assets/images/mocks/avatar.png'),
     bio: 'Toy collector, daily discoveries, and tiny worlds from Toybox.',
     stats: {
       posts: 9,
@@ -55,47 +59,47 @@ export const useGetProfile = (): GetProfile => {
     toys: [
       {
         id: 'toy-1',
-        media_url: 'https://picsum.photos/seed/toybox-1/400/400',
+        media_url: require('@/assets/images/mocks/toy-1.png'),
         caption: 'Newest catch',
       },
       {
         id: 'toy-2',
-        media_url: 'https://picsum.photos/seed/toybox-2/400/400',
+        media_url: require('@/assets/images/mocks/toy-2.png'),
         caption: 'Shelf favorite',
       },
       {
         id: 'toy-3',
-        media_url: 'https://picsum.photos/seed/toybox-3/400/400',
+        media_url: require('@/assets/images/mocks/toy-3.png'),
         caption: 'Weekend pull',
       },
       {
         id: 'toy-4',
-        media_url: 'https://picsum.photos/seed/toybox-4/400/400',
+        media_url: require('@/assets/images/mocks/toy-4.png'),
         caption: 'Trade find',
       },
       {
         id: 'toy-5',
-        media_url: 'https://picsum.photos/seed/toybox-5/400/400',
+        media_url: require('@/assets/images/mocks/toy-5.png'),
         caption: 'Desk buddy',
       },
       {
         id: 'toy-6',
-        media_url: 'https://picsum.photos/seed/toybox-6/400/400',
+        media_url: require('@/assets/images/mocks/toy-6.png'),
         caption: 'Fresh box',
       },
       {
         id: 'toy-7',
-        media_url: 'https://picsum.photos/seed/toybox-7/400/400',
+        media_url: require('@/assets/images/mocks/toy-7.png'),
         caption: 'Rare colorway',
       },
       {
         id: 'toy-8',
-        media_url: 'https://picsum.photos/seed/toybox-8/400/400',
+        media_url: require('@/assets/images/mocks/toy-8.png'),
         caption: 'Tiny scene',
       },
       {
         id: 'toy-9',
-        media_url: 'https://picsum.photos/seed/toybox-9/400/400',
+        media_url: require('@/assets/images/mocks/toy-9.png'),
         caption: 'Collection wall',
       },
     ],

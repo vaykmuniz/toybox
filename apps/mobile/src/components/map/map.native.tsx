@@ -14,7 +14,7 @@ function MapFallback({ message }: { message: string }) {
   );
 }
 
-export function HomeMap() {
+export function Map() {
   const [Mapbox, setMapbox] = useState<MapboxModule | null>();
 
   useEffect(() => {
