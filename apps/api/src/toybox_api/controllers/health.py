@@ -1,19 +1,16 @@
 from fastapi import APIRouter
 
-from toybox_api.config import get_settings
-from toybox_api.db import check_database
+from toybox_api.services.health import HealthService
 
 router = APIRouter()
+service = HealthService()
 
 
 @router.get("/health")
 async def health() -> dict[str, str]:
-    settings = get_settings()
-    return {"status": "ok", "service": settings.api_name}
+    return service.get_health()
 
 
 @router.get("/health/db")
 async def database_health() -> dict[str, str]:
-    settings = get_settings()
-    healthy = await check_database(settings)
-    return {"status": "ok" if healthy else "error"}
+    return await service.get_database_health()

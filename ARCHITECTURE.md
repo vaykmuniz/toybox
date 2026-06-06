@@ -18,8 +18,10 @@ The API uses a model/controller/repository structure under
 
 - `main.py`: application composition only. It creates the FastAPI app, configures
   middleware/static assets, and includes routers.
-- `controllers/`: FastAPI routers and request-level orchestration. Controllers
-  read request context, call repositories, and return response models.
+- `controllers/`: FastAPI routers. Controllers read request context, call
+  services, and return response models.
+- `services/`: application orchestration. Services call repositories and build
+  API response models.
 - `models/`: Pydantic API models for request and response contracts.
 - `repositories/`: data access boundaries. Repositories return internal records
   and hide whether data comes from mocks, raw SQL, or another source.
