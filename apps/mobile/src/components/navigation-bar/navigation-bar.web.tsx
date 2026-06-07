@@ -14,6 +14,9 @@ export default function NavigationBar() {
           <TabTrigger name="home" href="/" asChild>
             <TabButton>Home</TabButton>
           </TabTrigger>
+          <TabTrigger name="odds" href={'/odds' as Href} asChild>
+            <TabButton>Odds</TabButton>
+          </TabTrigger>
           <TabTrigger name="profile" href={'/profile' as Href} asChild>
             <ProfileTabButton />
           </TabTrigger>

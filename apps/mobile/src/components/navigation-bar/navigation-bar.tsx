@@ -45,14 +45,21 @@ export default function NavigationBar() {
       className="bg-theme-background dark:bg-theme-background-dark"
       indicatorClassName="bg-theme-element dark:bg-theme-element-dark"
       labelClassName="text-theme-text dark:text-theme-text-dark">
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger contentStyle={{ backgroundColor: 'transparent' }} name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}
           renderingMode="template"
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
+      <NativeTabs.Trigger contentStyle={{ backgroundColor: 'transparent' }} name="odds">
+        <NativeTabs.Trigger.Label>Odds</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger contentStyle={{ backgroundColor: 'transparent' }} name="profile">
         <NativeTabs.Trigger.Label hidden>Profile</NativeTabs.Trigger.Label>
         {profile?.avatar_url && (
           <NativeTabs.Trigger.Icon
