@@ -1,7 +1,8 @@
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import GradientBackground from '@/components/ui/gradient-background/gradient-background.component';
-import { ProfileHeaderCard, ProfileToyGrid } from '@/components/views/profile';
+import { ProfileHeaderCard } from '@/components/views/profile/profile-header-card.component';
+import { ProfileToyGrid } from '@/components/views/profile/profile-toy-grid.component';
 import { useGetProfile } from '@/hooks/use-get-profile.hook';
 
 export default function ProfileScreen() {

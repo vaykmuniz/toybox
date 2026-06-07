@@ -147,6 +147,13 @@ test('CustomText applies the requested variant style', () => {
   assert.equal(element.props.className, textVariants.lg);
 });
 
+test('CustomText exposes auth screen variants', () => {
+  const element = CustomText({ children: 'Toybox', variant: 'authBrand' });
+
+  assert.equal(element.props.children, 'Toybox');
+  assert.equal(element.props.className, textVariants.authBrand);
+});
+
 test('CustomText falls back to xl when variant is unknown at runtime', () => {
   const element = CustomText({ children: 'Title', variant: 'unknown' });
 
