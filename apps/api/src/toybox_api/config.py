@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     aws_bucket_name: str | None = None
     s3_endpoint_url: str | None = None
     s3_public_base_url: str | None = None
+    api_public_url: str = "http://localhost:8000"
+    resend_api_key: str = ""
+    resend_from_email: str = "onboarding@resend.dev"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

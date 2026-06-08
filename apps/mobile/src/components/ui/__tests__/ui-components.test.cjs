@@ -121,8 +121,13 @@ const collectTextChildren = (element, result = []) => {
     return result;
   }
 
+  if (typeof element.type === 'function') {
+    collectTextChildren(element.type(element.props), result);
+    return result;
+  }
+
   if (element.type === 'Text') {
-    result.push(element.props.children);
+    result.push(React.Children.toArray(element.props.children).join(''));
   }
 
   React.Children.forEach(element.props?.children, (child) => {
@@ -162,6 +167,13 @@ test('CustomText applies the requested variant style', () => {
 
   assert.equal(element.props.children, 'Title');
   assert.equal(element.props.className, textVariants.lg);
+});
+
+test('CustomText exposes auth screen variants', () => {
+  const element = CustomText({ children: 'Toybox', variant: 'authBrand' });
+
+  assert.equal(element.props.children, 'Toybox');
+  assert.equal(element.props.className, textVariants.authBrand);
 });
 
 test('CustomText falls back to xl when variant is unknown at runtime', () => {

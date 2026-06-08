@@ -51,3 +51,17 @@ with matching mobile-client updates and tests. Current API endpoints include:
 - `GET /health/db`
 - `GET /feed`
 - `/static/*`
+
+## Mobile Import Conventions
+
+Do not create or use barrel export files for mobile components, such as
+`components/views/feed/index.ts` or files that only re-export sibling components:
+
+```ts
+export { OddsErrorState, OddsLoadingState } from './odds-empty-state.component';
+export { OddsProfileCard } from './odds-profile-card.component';
+export { OddsView } from './odds-view.component';
+```
+
+Import components directly from their implementation files instead. This keeps
+component ownership explicit and avoids hidden dependency edges.
