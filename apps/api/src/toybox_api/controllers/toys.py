@@ -21,4 +21,5 @@ async def create_toy(payload: CreateToy) -> Toy:
         name=payload.name,
         image_url=payload.image_url,
         object_key=payload.object_key,
+        tries=payload.tries,
     )

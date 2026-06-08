@@ -198,6 +198,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
             name: 'Desk robot',
             media_url: 'https://cdn.example.com/toys/robot.png',
             object_key: 'toys/robot.png',
+            tries: 7,
             created_at: '2026-06-07T12:00:00+00:00',
           }),
         };
@@ -208,6 +209,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           name: 'Desk robot',
           imageUrl: 'https://cdn.example.com/toys/robot.png',
           objectKey: 'toys/robot.png',
+          tries: 7,
         });
 
         assert.equal(fetchCalls[0].url, 'http://localhost:8000/toys');
@@ -215,6 +217,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           name: 'Desk robot',
           image_url: 'https://cdn.example.com/toys/robot.png',
           object_key: 'toys/robot.png',
+          tries: 7,
         });
         assert.equal(toy.name, 'Desk robot');
       }
@@ -329,6 +332,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
             name: 'Desk robot',
             media_url: 'https://cdn.example.com/toys/robot.png',
             object_key: 'toys/robot.png',
+            tries: 7,
             created_at: '2026-06-07T12:00:00+00:00',
           }),
         };
@@ -337,6 +341,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
         const toy = await uploadToy({
           apiUrl: 'http://localhost:8000',
           name: 'Desk robot',
+          tries: 7,
           fileName: 'robot.png',
           contentType: 'image/png',
           file: new Blob(['image'], { type: 'image/png' }),
@@ -351,6 +356,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           ]
         );
         assert.equal(fetchCalls[1].options.headers['Content-Type'], 'image/png');
+        assert.equal(JSON.parse(fetchCalls[2].options.body).tries, 7);
         assert.equal(toy.media_url, 'https://cdn.example.com/toys/robot.png');
       }
     );
@@ -485,6 +491,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
             uploadToy({
               apiUrl: 'http://localhost:8000',
               name: 'Desk robot',
+              tries: 7,
               fileName: 'robot.png',
               contentType: 'image/png',
               file: new Blob(['image'], { type: 'image/png' }),

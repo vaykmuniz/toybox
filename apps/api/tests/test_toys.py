@@ -18,12 +18,19 @@ def api_client() -> httpx.AsyncClient:
 
 
 class FakeToyRepository:
-    async def create_toy(self, name: str, image_url: str, object_key: str) -> ToyRecord:
+    async def create_toy(
+        self,
+        name: str,
+        image_url: str,
+        object_key: str,
+        tries: int,
+    ) -> ToyRecord:
         return ToyRecord(
             id=UUID("11111111-1111-1111-1111-111111111111"),
             name=name,
             image_url=image_url,
             object_key=object_key,
+            tries=tries,
             created_at=datetime(2026, 6, 7, 12, 0, tzinfo=UTC),
         )
 
@@ -36,12 +43,13 @@ class FakeToyService:
             "object_key": f"toys/{file_name}",
         }
 
-    async def create_toy(self, name: str, image_url: str, object_key: str):
+    async def create_toy(self, name: str, image_url: str, object_key: str, tries: int):
         return {
             "id": "11111111-1111-1111-1111-111111111111",
             "name": name,
             "media_url": image_url,
             "object_key": object_key,
+            "tries": tries,
             "created_at": "2026-06-07T12:00:00+00:00",
         }
 
@@ -87,6 +95,7 @@ async def test_create_toy_returns_saved_toy(monkeypatch: pytest.MonkeyPatch) -> 
                 "name": "Desk robot",
                 "image_url": "https://cdn.example.com/toys/robot.png",
                 "object_key": "toys/robot.png",
+                "tries": 7,
             },
         )
 
@@ -97,6 +106,7 @@ async def test_create_toy_returns_saved_toy(monkeypatch: pytest.MonkeyPatch) -> 
         "name": "Desk robot",
         "media_url": "https://cdn.example.com/toys/robot.png",
         "object_key": "toys/robot.png",
+        "tries": 7,
         "created_at": "2026-06-07T12:00:00+00:00",
     }
 
@@ -111,12 +121,14 @@ async def test_create_toy_service_persists_record() -> None:
         name="  Desk robot  ",
         image_url="https://cdn.example.com/toys/robot.png",
         object_key="toys/robot.png",
+        tries=7,
     )
 
     assert toy.id == "11111111-1111-1111-1111-111111111111"
     assert toy.name == "Desk robot"
     assert toy.media_url == "https://cdn.example.com/toys/robot.png"
     assert toy.object_key == "toys/robot.png"
+    assert toy.tries == 7
 
 
 async def test_upload_url_uses_boto3_put_object_presign(monkeypatch: pytest.MonkeyPatch) -> None:

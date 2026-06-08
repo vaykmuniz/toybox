@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from asyncpg.exceptions import UniqueViolationError
 from fastapi import HTTPException, status
 
+from toybox_api.config import get_settings
 from toybox_api.models.auth import (
     LoginRequest,
     LoginResponse,
@@ -14,8 +15,14 @@ from toybox_api.models.auth import (
     VerifyRegisterRequest,
     VerifyRegisterResponse,
 )
-from toybox_api.repositories.auth import AuthRepository, CreatedUserRecord, DuplicateUserError
+from toybox_api.repositories.auth import (
+    AccountUserRecord,
+    AuthRepository,
+    CreatedUserRecord,
+    DuplicateUserError,
+)
 from toybox_api.services.email import EmailDeliveryError, ResendEmailService
+from toybox_api.services.jwt import encode_jwt
 
 RegistrationTokenTtl = timedelta(hours=1)
 PasswordHashIterations = 600_000
@@ -102,11 +109,18 @@ class AuthService:
                 detail="Account is not verified.",
             )
 
+        expires_at = self._now() + timedelta(
+            minutes=get_settings().jwt_access_token_expire_minutes
+        )
+
         return LoginResponse(
             id=user.id,
             email=user.email,
             username=user.username,
             name=user.name,
+            access_token=self._create_access_token(user, expires_at),
+            token_type="bearer",
+            expires_at=expires_at,
         )
 
     def _now(self) -> datetime:
@@ -147,6 +161,22 @@ class AuthService:
             email=user.email,
             username=user.username,
             token=user.token,
+        )
+
+    def _create_access_token(self, user: AccountUserRecord, expires_at: datetime) -> str:
+        settings = get_settings()
+
+        return encode_jwt(
+            payload={
+                "sub": user.id,
+                "email": user.email,
+                "username": user.username,
+                "name": user.name,
+                "iat": self._now(),
+                "exp": expires_at,
+            },
+            secret_key=settings.jwt_secret_key,
+            algorithm=settings.jwt_algorithm,
         )
 
     def _raise_duplicate_user_conflict(self, error: DuplicateUserError) -> None:

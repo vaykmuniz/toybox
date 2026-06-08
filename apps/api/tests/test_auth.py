@@ -1,4 +1,8 @@
-from datetime import datetime, timedelta
+import base64
+import hashlib
+import hmac
+import json
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
@@ -18,6 +22,7 @@ from toybox_api.services.auth import AuthService
 from toybox_api.services.email import EmailDeliveryError
 
 FixedNow = datetime(2026, 6, 7, 12, 0, 0)
+JwtSecretKey = "toybox-local-development-secret"
 
 
 class FakeAuthRepository:
@@ -148,6 +153,22 @@ def create_service(
 def api_client() -> httpx.AsyncClient:
     transport = httpx.ASGITransport(app=app)
     return httpx.AsyncClient(transport=transport, base_url="http://testserver")
+
+
+def decode_verified_jwt(token: str) -> dict[str, object]:
+    header_text, payload_text, signature_text = token.split(".", 2)
+    signing_input = f"{header_text}.{payload_text}"
+    expected_signature = hmac.new(
+        JwtSecretKey.encode("utf-8"),
+        signing_input.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+
+    assert signature_text == base64.urlsafe_b64encode(expected_signature).decode("ascii").rstrip(
+        "="
+    )
+
+    return json.loads(base64.urlsafe_b64decode(f"{payload_text}==="))
 
 
 async def test_register_creates_pending_user_with_token() -> None:
@@ -338,6 +359,18 @@ async def test_login_returns_valid_account() -> None:
     assert response.email == "user@example.com"
     assert response.username == "collector"
     assert response.name == "Toy Collector"
+    assert response.token_type == "bearer"
+    assert response.expires_at == FixedNow + timedelta(hours=1)
+
+    payload = decode_verified_jwt(response.access_token)
+    assert payload == {
+        "email": "user@example.com",
+        "exp": int((FixedNow + timedelta(hours=1)).replace(tzinfo=UTC).timestamp()),
+        "iat": int(FixedNow.replace(tzinfo=UTC).timestamp()),
+        "name": "Toy Collector",
+        "sub": "user-1",
+        "username": "collector",
+    }
 
 
 async def test_login_rejects_pending_account() -> None:
@@ -432,12 +465,14 @@ async def test_login_endpoint_returns_valid_account(monkeypatch: pytest.MonkeyPa
         )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "id": "user-1",
-        "email": "user@example.com",
-        "username": "collector",
-        "name": "Toy Collector",
-    }
+    payload = response.json()
+    assert payload["id"] == "user-1"
+    assert payload["email"] == "user@example.com"
+    assert payload["username"] == "collector"
+    assert payload["name"] == "Toy Collector"
+    assert payload["token_type"] == "bearer"
+    assert payload["expires_at"] == "2026-06-07T13:00:00"
+    assert decode_verified_jwt(payload["access_token"])["sub"] == "user-1"
 
 
 async def test_verify_register_link_endpoint_verifies_account(

@@ -41,11 +41,12 @@ class ToyService:
             object_key=object_key,
         )
 
-    async def create_toy(self, name: str, image_url: str, object_key: str) -> Toy:
+    async def create_toy(self, name: str, image_url: str, object_key: str, tries: int) -> Toy:
         record = await self.repository.create_toy(
             name=name.strip(),
             image_url=image_url,
             object_key=object_key,
+            tries=tries,
         )
         return self._toy_response(record)
 
@@ -113,5 +114,6 @@ class ToyService:
             name=record.name,
             media_url=record.image_url,
             object_key=record.object_key,
+            tries=record.tries,
             created_at=record.created_at.isoformat(),
         )

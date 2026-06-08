@@ -65,6 +65,7 @@ export function OddsView() {
               oddValue={oddValue}
               profile={profileRequest.profile}
             />
+            
           </View>
         ) : null}
       </ScrollView>

@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 
+import ToyOdds from '@/components/shared/toy-odds.component';
 import Card from '@/components/ui/card/card.component';
-import CustomImage from '@/components/ui/custom-image/custom-image.component';
 import { Toy } from '@/hooks/use-get-profile.hook';
 
 type ProfileToyGridProps = {
@@ -12,36 +12,11 @@ export function ProfileToyGrid({ toys }: ProfileToyGridProps) {
   return (
     <Card className="overflow-hidden p-0">
       <View className="flex-row items-center justify-between px-4 py-3">
-        <Text className="font-display text-lg font-bold text-ink">Toy grid</Text>
-        <Text className="font-display text-sm font-semibold text-ink/65">{toys.length} posts</Text>
+        <Text className="font-display text-lg font-bold text-ink">Your Toys</Text>
+        <Text className="font-display text-sm font-semibold text-ink/65">{toys.length} toys</Text>
       </View>
 
-      {toys.length > 0 ? (
-        <View className="flex-row flex-wrap bg-ink/10 p-0.5">
-          {toys.map((toy) => (
-            <View
-              key={toy.id}
-              className="p-0.5"
-              style={{ aspectRatio: 1, flexBasis: '33.333%' }}>
-              <View className="h-full w-full overflow-hidden bg-white/45">
-                <CustomImage
-                  accessibilityLabel={toy.caption ?? 'Toy post'}
-                  contentFit="cover"
-                  source={toy.media_url}
-                />
-                {toy.caption ? (
-                  <View className="absolute inset-x-0 bottom-0 bg-ink/70 px-2 py-1">
-                    <Text
-                      className="font-display text-xs font-bold text-white"
-                      numberOfLines={1}>
-                      {toy.caption}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          ))}
-        </View>
+      {toys.length > 0 ? toys.map((toy) => <ToyOdds key={toy.id} toy={toy} />
       ) : (
         <View className="items-center justify-center px-6 py-16">
           <Text className="font-display text-base font-semibold text-ink/65">No toys yet</Text>

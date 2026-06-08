@@ -118,6 +118,13 @@ const sampleUser = {
   name: 'Toy Collector',
 };
 
+const sampleLoginResponse = {
+  ...sampleUser,
+  access_token: 'signed.jwt.token',
+  token_type: 'bearer',
+  expires_at: '2026-06-07T13:00:00',
+};
+
 const loginPayload = {
   username: 'collector',
   password: 'secret',
@@ -159,7 +166,7 @@ const registerPayload = {
         return {
           ok: true,
           status: 200,
-          json: async () => sampleUser,
+          json: async () => sampleLoginResponse,
         };
       },
       async () => {
@@ -176,6 +183,9 @@ const registerPayload = {
           },
         ]);
         assert.equal(user.username, 'collector');
+        assert.equal(user.access_token, 'signed.jwt.token');
+        assert.equal(user.token_type, 'bearer');
+        assert.equal(user.expires_at, '2026-06-07T13:00:00');
       }
     );
   });

@@ -4,8 +4,6 @@ import Avatar from '@/components/ui/avatar/avatar.component';
 import Card from '@/components/ui/card/card.component';
 import { GetProfile } from '@/hooks/use-get-profile.hook';
 
-import { ProfileBadgeList } from './profile-badge-list.component';
-import { ProfileStats } from './profile-stats.component';
 
 type ProfileHeaderCardProps = {
   className?: string;
@@ -33,10 +31,6 @@ export function ProfileHeaderCard({ className, profile }: ProfileHeaderCardProps
           </View>
         </View>
       </View>
-
-      <ProfileBadgeList badges={profile.badges} />
-
-      <ProfileStats stats={profile.stats} />
     </Card>
   );
 }

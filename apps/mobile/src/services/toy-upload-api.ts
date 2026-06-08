@@ -21,6 +21,7 @@ export interface CreateToyRequest {
   name: string;
   imageUrl: string;
   objectKey: string;
+  tries: number;
 }
 
 export interface Toy {
@@ -28,6 +29,7 @@ export interface Toy {
   name: string;
   media_url: string;
   object_key: string;
+  tries: number;
   created_at: string;
 }
 
@@ -228,6 +230,7 @@ export const createToy = async ({
   name,
   imageUrl,
   objectKey,
+  tries,
   timeoutMs = DefaultToyUploadTimeoutMs,
   ...apiOptions
 }: CreateToyRequest & ToyUploadApiOptions): Promise<Toy> => {
@@ -249,6 +252,7 @@ export const createToy = async ({
         name,
         image_url: imageUrl,
         object_key: objectKey,
+        tries,
       }),
     },
     timeoutMs,
@@ -264,6 +268,7 @@ export const createToy = async ({
 
 export const uploadToy = async ({
   name,
+  tries,
   fileName,
   contentType,
   file,
@@ -289,6 +294,7 @@ export const uploadToy = async ({
     name,
     imageUrl: uploadTarget.object_url,
     objectKey: uploadTarget.object_key,
+    tries,
     ...apiOptions,
   });
 };

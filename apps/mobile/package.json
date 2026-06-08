@@ -16,6 +16,7 @@
     "expo-linking": "~56.0.13",
     "expo-location": "~56.0.16",
     "expo-router": "~56.2.8",
+    "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.5",
@@ -53,7 +54,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "tsc --noEmit && pnpm run test:unit",
-    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/services/__tests__/feed-api.test.cjs && node ./src/services/__tests__/profile-api.test.cjs && node ./src/services/__tests__/toy-upload-api.test.cjs && node ./src/services/__tests__/auth-api.test.cjs"
+    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/services/__tests__/feed-api.test.cjs && node ./src/services/__tests__/profile-api.test.cjs && node ./src/services/__tests__/toy-upload-api.test.cjs && node ./src/services/__tests__/auth-api.test.cjs && node ./src/services/__tests__/auth-session-storage.test.cjs && node './src/app/(tabs)/__tests__/profile-screen.test.cjs'"
   },
   "private": true
 }

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -71,3 +72,6 @@ class LoginResponse(BaseModel):
     email: str
     username: str
     name: str
+    access_token: str
+    token_type: Literal["bearer"]
+    expires_at: datetime

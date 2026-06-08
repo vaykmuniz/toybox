@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     api_public_url: str = "http://localhost:8000"
     resend_api_key: str = ""
     resend_from_email: str = "onboarding@resend.dev"
+    jwt_secret_key: str = "toybox-local-development-secret"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

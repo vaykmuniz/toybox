@@ -2,10 +2,12 @@ import { Tabs } from 'expo-router';
 import { Image, StyleSheet, useColorScheme, View } from 'react-native';
 
 import Avatar from '@/components/ui/avatar/avatar.component';
+import { useAuthSession } from '@/hooks/use-auth-session.hook';
 import { useGetProfile } from '@/hooks/use-get-profile.hook';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { user } = useAuthSession();
   const { profile } = useGetProfile();
   const isDark = colorScheme === 'dark';
   const colors = isDark ? darkColors : lightColors;
@@ -63,7 +65,7 @@ export default function TabLayout() {
               ]}>
               {profile ? (
                 <Avatar
-                  accessibilityLabel={`${profile.name} profile photo`}
+                  accessibilityLabel={`${user?.name ?? profile.name} profile photo`}
                   className="border-0"
                   size="xs"
                   source={profile.avatar_url}

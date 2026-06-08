@@ -16,6 +16,7 @@ class CreateToy(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     image_url: str = Field(min_length=1)
     object_key: str = Field(min_length=1)
+    tries: int = Field(ge=1)
 
 
 class Toy(BaseModel):
@@ -23,4 +24,5 @@ class Toy(BaseModel):
     name: str
     media_url: str
     object_key: str
+    tries: int
     created_at: str

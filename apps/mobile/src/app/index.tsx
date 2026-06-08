@@ -18,6 +18,7 @@ import {
 } from '@/components/form/form.component';
 import GradientBackground from '@/components/ui/gradient-background/gradient-background.component';
 import CustomText from '@/components/ui/text/text.component';
+import { useAuthSession } from '@/hooks/use-auth-session.hook';
 import { login, register } from '@/services/auth-api';
 
 type AuthMode = 'login' | 'register';
@@ -54,6 +55,7 @@ const initialRegisterForm: RegisterForm = {
 };
 
 export default function AuthScreen() {
+  const { setSession } = useAuthSession();
   const [mode, setMode] = useState<AuthMode>('login');
   const [loginForm, setLoginForm] = useState<LoginForm>(initialLoginForm);
   const [registerForm, setRegisterForm] = useState<RegisterForm>(initialRegisterForm);
@@ -121,12 +123,13 @@ export default function AuthScreen() {
 
     try {
       if (isLogin) {
-        await login({
+        const user = await login({
           payload: {
             password: loginForm.password,
             username: loginForm.username.trim(),
           },
         });
+        await setSession(user);
         router.replace('/home' as Href);
         return;
       }

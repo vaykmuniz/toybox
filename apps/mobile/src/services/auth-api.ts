@@ -12,6 +12,9 @@ export interface LoginResponse {
   email: string;
   username: string;
   name: string;
+  access_token: string;
+  token_type: 'bearer';
+  expires_at: string;
 }
 
 export interface RegisterRequest {

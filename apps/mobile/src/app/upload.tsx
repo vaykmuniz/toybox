@@ -52,11 +52,14 @@ const getUploadFileFromImage = async (image: PickedToyImage): Promise<ToyUploadF
 export default function UploadScreen() {
   const profileRequest = useGetProfile();
   const [name, setName] = useState('');
+  const [tries, setTries] = useState('');
   const [image, setImage] = useState<PickedToyImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPicking, setIsPicking] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const canSubmit = name.trim().length > 0 && image && !isUploading;
+  const parsedTries = Number.parseInt(tries, 10);
+  const hasValidTries = Number.isInteger(parsedTries) && parsedTries >= 1;
+  const canSubmit = name.trim().length > 0 && hasValidTries && image && !isUploading;
 
   const pickImage = async () => {
     setError(null);
@@ -100,12 +103,14 @@ export default function UploadScreen() {
 
       await uploadToy({
         name: name.trim(),
+        tries: parsedTries,
         fileName: image.fileName,
         contentType: image.contentType,
         file,
       });
 
       setName('');
+      setTries('');
       setImage(null);
       await profileRequest.refetch();
       router.replace('/profile');
@@ -163,6 +168,24 @@ export default function UploadScreen() {
                     placeholder="Toy name"
                     placeholderTextColor="rgba(29, 25, 38, 0.45)"
                     value={name}
+                  />
+                </View>
+
+                <View className="gap-2">
+                  <Text className="font-display text-sm font-bold text-ink">Tries</Text>
+                  <TextInput
+                    accessibilityLabel="Number of tries"
+                    className="rounded-lg border border-ink/15 px-4 py-3 font-display text-base text-ink"
+                    editable={!isUploading}
+                    inputMode="numeric"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    onChangeText={(value) => {
+                      setTries(value.replace(/\D/g, ''));
+                    }}
+                    placeholder="How many tries?"
+                    placeholderTextColor="rgba(29, 25, 38, 0.45)"
+                    value={tries}
                   />
                 </View>
 

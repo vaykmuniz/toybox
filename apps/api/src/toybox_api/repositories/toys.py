@@ -13,6 +13,7 @@ class ToyRecord:
     name: str
     image_url: str
     object_key: str
+    tries: int
     created_at: datetime
 
 
@@ -20,19 +21,26 @@ class ToyRepository:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    async def create_toy(self, name: str, image_url: str, object_key: str) -> ToyRecord:
+    async def create_toy(
+        self,
+        name: str,
+        image_url: str,
+        object_key: str,
+        tries: int,
+    ) -> ToyRecord:
         connection = await asyncpg.connect(self.settings.database_url)
         try:
             row = await connection.fetchrow(
                 """
-                insert into toy (id, name, image_url, object_key)
-                values ($1, $2, $3, $4)
-                returning id, name, image_url, object_key, created_at
+                insert into toy (id, name, image_url, object_key, tries)
+                values ($1, $2, $3, $4, $5)
+                returning id, name, image_url, object_key, tries, created_at
                 """,
                 uuid4(),
                 name,
                 image_url,
                 object_key,
+                tries,
             )
         finally:
             await connection.close()
@@ -42,6 +50,7 @@ class ToyRepository:
             name=row["name"],
             image_url=row["image_url"],
             object_key=row["object_key"],
+            tries=row["tries"],
             created_at=row["created_at"],
         )
 
@@ -50,7 +59,7 @@ class ToyRepository:
         try:
             rows = await connection.fetch(
                 """
-                select id, name, image_url, object_key, created_at
+                select id, name, image_url, object_key, tries, created_at
                 from toy
                 order by created_at desc
                 """
@@ -64,6 +73,7 @@ class ToyRepository:
                 name=row["name"],
                 image_url=row["image_url"],
                 object_key=row["object_key"],
+                tries=row["tries"],
                 created_at=row["created_at"],
             )
             for row in rows
