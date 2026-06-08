@@ -59,6 +59,10 @@ export default function NavigationBar() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger contentStyle={{ backgroundColor: 'transparent' }} name="upload">
+        <NativeTabs.Trigger.Label>Upload</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon md="add" sf="plus" />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger contentStyle={{ backgroundColor: 'transparent' }} name="profile">
         <NativeTabs.Trigger.Label hidden>Profile</NativeTabs.Trigger.Label>
         {profile?.avatar_url && (

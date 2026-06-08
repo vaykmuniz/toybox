@@ -4,6 +4,8 @@ from urllib.parse import urlparse
 import httpx
 
 from toybox_api.main import app
+from toybox_api.repositories import profile as profile_repository
+from toybox_api.repositories.profile import ProfileRepository
 
 StaticDirectory = Path(__file__).parents[1] / "src" / "toybox_api" / "static"
 
@@ -68,3 +70,29 @@ async def test_profile_static_image_url_points_to_asset() -> None:
     asset_path = StaticDirectory / urlparse(media_url).path.removeprefix("/static/")
     assert asset_path.is_file()
     assert asset_path.suffix == ".png"
+
+
+async def test_profile_uploaded_toy_name_is_returned_as_caption(monkeypatch) -> None:
+    class FakeConnection:
+        async def fetch(self, query):
+            return [
+                {
+                    "id": "11111111-1111-1111-1111-111111111111",
+                    "name": "Desk robot",
+                    "image_url": "https://cdn.example.com/toys/robot.jpg",
+                }
+            ]
+
+        async def close(self):
+            pass
+
+    async def fake_connect(database_url):
+        return FakeConnection()
+
+    monkeypatch.setattr(profile_repository.asyncpg, "connect", fake_connect)
+
+    toys = await ProfileRepository().list_uploaded_toys()
+
+    assert toys[0].caption == "Desk robot"
+    assert toys[0].media_path == "https://cdn.example.com/toys/robot.jpg"
+    assert toys[0].is_absolute_url is True

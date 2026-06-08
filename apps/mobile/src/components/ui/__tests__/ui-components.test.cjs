@@ -104,6 +104,7 @@ const { cardBaseClassName } = require('../card/card.styles');
 const CustomImage = require('../custom-image/custom-image.component').default;
 const { customImageBaseClassName } = require('../custom-image/custom-image.styles');
 const Pill = require('../pill/pill.component').default;
+const { ProfileToyGrid } = require('../../views/profile/profile-toy-grid.component');
 const {
   pillBaseClassName,
   pillTextBaseClassName,
@@ -114,6 +115,22 @@ const CustomText = require('../text/text.component').default;
 const { textVariants } = require('../text/text.styles');
 
 const getOnlyChild = (element) => React.Children.only(element.props.children);
+
+const collectTextChildren = (element, result = []) => {
+  if (!element || typeof element !== 'object') {
+    return result;
+  }
+
+  if (element.type === 'Text') {
+    result.push(element.props.children);
+  }
+
+  React.Children.forEach(element.props?.children, (child) => {
+    collectTextChildren(child, result);
+  });
+
+  return result;
+};
 
 const classNameIncludes = (actual, expected) => {
   for (const token of expected.split(' ')) {
@@ -226,4 +243,18 @@ test('Avatar passes image props to CustomImage and keeps rounded image styles', 
   assert.equal(image.props.source, source);
   assert.equal(image.props.accessibilityLabel, 'Profile photo');
   assert.deepEqual(image.props.style, { opacity: 0.75 });
+});
+
+test('ProfileToyGrid renders toy captions visibly', () => {
+  const element = ProfileToyGrid({
+    toys: [
+      {
+        id: 'toy-1',
+        media_url: { uri: 'https://example.test/robot.jpg' },
+        caption: 'Desk robot',
+      },
+    ],
+  });
+
+  assert.deepEqual(collectTextChildren(element), ['Toy grid', '1 posts', 'Desk robot']);
 });

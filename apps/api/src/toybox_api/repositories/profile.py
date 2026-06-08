@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+import asyncpg
+
+from toybox_api.config import Settings, get_settings
+
 
 @dataclass(frozen=True)
 class ProfileStatsRecord:
@@ -19,6 +23,7 @@ class ProfileToyRecord:
     id: str
     media_path: str
     caption: str | None = None
+    is_absolute_url: bool = False
 
 
 @dataclass(frozen=True)
@@ -109,5 +114,52 @@ MockProfile = ProfileRecord(
 
 
 class ProfileRepository:
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or get_settings()
+
     async def get_profile(self) -> ProfileRecord:
-        return MockProfile
+        uploaded_toys = await self.list_uploaded_toys()
+
+        return ProfileRecord(
+            id=MockProfile.id,
+            name=MockProfile.name,
+            handle=MockProfile.handle,
+            avatar_path=MockProfile.avatar_path,
+            bio=MockProfile.bio,
+            stats=ProfileStatsRecord(
+                posts=MockProfile.stats.posts + len(uploaded_toys),
+                followers=MockProfile.stats.followers,
+                following=MockProfile.stats.following,
+            ),
+            badges=MockProfile.badges,
+            toys=[*uploaded_toys, *MockProfile.toys],
+        )
+
+    async def list_uploaded_toys(self) -> list[ProfileToyRecord]:
+        try:
+            connection = await asyncpg.connect(self.settings.database_url)
+        except (OSError, asyncpg.PostgresError):
+            return []
+
+        try:
+            rows = await connection.fetch(
+                """
+                select id, name, image_url
+                from toy
+                order by created_at desc
+                """
+            )
+        except asyncpg.PostgresError:
+            return []
+        finally:
+            await connection.close()
+
+        return [
+            ProfileToyRecord(
+                id=str(row["id"]),
+                media_path=row["image_url"],
+                caption=row["name"],
+                is_absolute_url=True,
+            )
+            for row in rows
+        ]

@@ -38,7 +38,9 @@ class ProfileService:
             toys=[
                 ProfileToy(
                     id=toy.id,
-                    media_url=self._static_url(request, toy.media_path),
+                    media_url=toy.media_path
+                    if toy.is_absolute_url
+                    else self._static_url(request, toy.media_path),
                     caption=toy.caption,
                 )
                 for toy in profile.toys

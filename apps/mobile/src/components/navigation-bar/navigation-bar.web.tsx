@@ -1,5 +1,6 @@
 import type { Href } from 'expo-router';
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
+import { SymbolView } from 'expo-symbols';
 import { Pressable, Text, View } from 'react-native';
 
 import Avatar from '@/components/ui/avatar/avatar.component';
@@ -16,6 +17,9 @@ export default function NavigationBar() {
           </TabTrigger>
           <TabTrigger name="odds" href={'/odds' as Href} asChild>
             <TabButton>Odds</TabButton>
+          </TabTrigger>
+          <TabTrigger name="upload" href={'/upload' as Href} asChild>
+            <PlusTabButton />
           </TabTrigger>
           <TabTrigger name="profile" href={'/profile' as Href} asChild>
             <ProfileTabButton />
@@ -47,6 +51,30 @@ export function TabButton({ children, className, isFocused, ...props }: TabButto
           }>
           {children}
         </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+export function PlusTabButton({ isFocused, ...props }: TabTriggerSlotProps) {
+  return (
+    <Pressable {...props} accessibilityLabel="Upload toy" className="active:opacity-70">
+      <View
+        className={
+          isFocused
+            ? 'h-10 w-10 items-center justify-center rounded-full bg-theme-selected dark:bg-theme-selected-dark'
+            : 'h-10 w-10 items-center justify-center rounded-full bg-theme-element dark:bg-theme-element-dark'
+        }>
+        <SymbolView
+          fallback={
+            <Text className="font-display text-2xl font-bold text-theme-text dark:text-theme-text-dark">
+              +
+            </Text>
+          }
+          name="plus"
+          size={20}
+          tintColor={isFocused ? '#1d1926' : 'rgba(29, 25, 38, 0.65)'}
+        />
       </View>
     </Pressable>
   );

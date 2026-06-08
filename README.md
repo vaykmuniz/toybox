@@ -119,6 +119,19 @@ mise run lint
 - API database health: `http://localhost:8000/health/db`
 - Postgres: `localhost:5432`
 
+## S3 Uploads
+
+Toy uploads use presigned S3 URLs. Set these in `.env` before using the upload
+screen:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `AWS_BUCKET_NAME`
+- `S3_ENDPOINT_URL` for S3-compatible local or third-party storage, optional
+- `S3_PUBLIC_BASE_URL` when public file URLs should use a CDN or custom domain,
+  optional
+
 ## Database
 
 Default local credentials:

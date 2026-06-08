@@ -23,12 +23,21 @@ export function ProfileToyGrid({ toys }: ProfileToyGridProps) {
               key={toy.id}
               className="p-0.5"
               style={{ aspectRatio: 1, flexBasis: '33.333%' }}>
-              <View className="h-full w-full bg-white/45">
+              <View className="h-full w-full overflow-hidden bg-white/45">
                 <CustomImage
                   accessibilityLabel={toy.caption ?? 'Toy post'}
                   contentFit="cover"
                   source={toy.media_url}
                 />
+                {toy.caption ? (
+                  <View className="absolute inset-x-0 bottom-0 bg-ink/70 px-2 py-1">
+                    <Text
+                      className="font-display text-xs font-bold text-white"
+                      numberOfLines={1}>
+                      {toy.caption}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             </View>
           ))}

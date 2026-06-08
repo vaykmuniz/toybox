@@ -10,6 +10,8 @@
     "expo-font": "~56.0.5",
     "expo-glass-effect": "~56.0.4",
     "expo-image": "~56.0.9",
+    "expo-image-manipulator": "~56.0.17",
+    "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "~56.0.4",
     "expo-linking": "~56.0.13",
     "expo-router": "~56.2.8",
@@ -48,7 +50,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "tsc --noEmit && pnpm run test:unit",
-    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/services/__tests__/feed-api.test.cjs && node ./src/services/__tests__/profile-api.test.cjs"
+    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/services/__tests__/feed-api.test.cjs && node ./src/services/__tests__/profile-api.test.cjs && node ./src/services/__tests__/toy-upload-api.test.cjs"
   },
   "private": true
 }
