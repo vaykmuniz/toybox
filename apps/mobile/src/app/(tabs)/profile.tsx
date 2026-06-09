@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import GradientBackground from '@/components/ui/gradient-background/gradient-background.component';
@@ -22,43 +21,20 @@ export const applyUserToProfile = (profile: GetProfile, user: AuthSession | null
 };
 
 export default function ProfileScreen() {
-  const { clearSession, isLoading: isAuthLoading, user } = useAuthSession();
+  const { isLoading: isAuthLoading, user } = useAuthSession();
   const profileRequest = useGetProfile();
   const showLoading = isAuthLoading || (profileRequest.isLoading && !profileRequest.profile);
   const showError = profileRequest.error && !profileRequest.profile;
   const profile = profileRequest.profile ? applyUserToProfile(profileRequest.profile, user) : null;
 
-  const handleLogout = async () => {
-    await clearSession();
-    router.replace('/');
-  };
-
-  const handleUpload = () => {
-    router.push('/upload');
-  };
 
   return (
     <GradientBackground>
-      <View className="flex-1">
+      <View className="flex-1 pt-8">
         <ScrollView
           className="flex-1"
           contentContainerClassName="flex-grow p-5"
           showsVerticalScrollIndicator={false}>
-          <View className="mb-5 flex-row justify-end gap-3">
-            <Pressable
-              accessibilityRole="button"
-              className="rounded-full bg-white px-4 py-2"
-              onPress={handleUpload}>
-              <Text className="font-display text-sm font-bold text-ink">Upload</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              className="rounded-full bg-white/90 px-4 py-2"
-              onPress={handleLogout}>
-              <Text className="font-display text-sm font-bold text-ink">Log out</Text>
-            </Pressable>
-          </View>
-
           {showLoading ? (
             <View className="flex-1 items-center justify-center gap-4">
               <ActivityIndicator color="white" size="large" />
