@@ -4,6 +4,7 @@ import Avatar from '@/components/ui/avatar/avatar.component';
 import Card from '@/components/ui/card/card.component';
 import type { GetProfile } from '@/hooks/use-get-profile.hook';
 
+import CustomText from '@/components/ui/text/text.component';
 import { OddProgressBar } from './odd-progress-bar.component';
 import { ToyCarousel } from './toy-carousel.component';
 
@@ -25,6 +26,9 @@ export function OddsProfileCard({ carouselSize, oddValue, profile }: OddsProfile
       <ToyCarousel size={carouselSize} toys={profile.toys} />
 
       <View className="min-w-0 flex-1 items-start">
+        <CustomText className="font-display text-sm font-bold text-ink" numberOfLines={1}>
+          {oddValue.toFixed(2)}
+        </CustomText>
         <OddProgressBar value={oddValue} />
       </View>
     </Card>

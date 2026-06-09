@@ -28,7 +28,6 @@ export default function OddsScreen() {
   const showError = profileRequest.error && !profileRequest.profile;
   const carouselSize = Math.min(112, Math.max(84, width * 0.24));
   const isRefreshing = profileRequest.isLoading || locationRequest.isLoading;
-  const oddValue = resolveOddValue(locationRequest.latLong);
   const handleRefresh = useCallback(async () => {
     await Promise.all([profileRequest.refetch(), locationRequest.refetch()]);
   }, [locationRequest, profileRequest]);
@@ -62,7 +61,7 @@ export default function OddsScreen() {
 
             <OddsProfileCard
               carouselSize={carouselSize}
-              oddValue={oddValue}
+              oddValue={0.5}
               profile={profileRequest.profile}
             />
             
