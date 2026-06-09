@@ -1,4 +1,4 @@
-import { getApiSetupError, resolveApiUrl, type FeedApiOptions } from './feed-api';
+import { getApiSetupError, resolveApiUrl, type ApiOptions } from './api';
 
 const DefaultAuthTimeoutMs = 10_000;
 
@@ -32,7 +32,7 @@ export interface RegisterResponse {
   token_expires_at: string;
 }
 
-export type AuthApiOptions = FeedApiOptions;
+export type AuthApiOptions = ApiOptions;
 
 export interface AuthRequestOptions extends AuthApiOptions {
   timeoutMs?: number;

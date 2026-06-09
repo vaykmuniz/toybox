@@ -1,8 +1,8 @@
-import { getApiSetupError, resolveApiUrl, type FeedApiOptions } from './feed-api';
+import { getApiSetupError, resolveApiUrl, type ApiOptions } from './api';
 
 const DefaultToyUploadTimeoutMs = 20_000;
 
-export interface ToyUploadApiOptions extends FeedApiOptions {
+export interface ToyUploadApiOptions extends ApiOptions {
   timeoutMs?: number;
 }
 
@@ -80,11 +80,11 @@ const getLoopbackUploadUrlError = (uploadUrl: string) => {
   return null;
 };
 
-export const getToyUploadUrlEndpoint = (options: FeedApiOptions = {}) => {
+export const getToyUploadUrlEndpoint = (options: ApiOptions = {}) => {
   return `${resolveApiUrl(options)}/toys/upload-url`;
 };
 
-export const getCreateToyEndpoint = (options: FeedApiOptions = {}) => {
+export const getCreateToyEndpoint = (options: ApiOptions = {}) => {
   return `${resolveApiUrl(options)}/toys`;
 };
 

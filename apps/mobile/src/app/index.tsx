@@ -130,7 +130,7 @@ export default function AuthScreen() {
           },
         });
         await setSession(user);
-        router.replace('/home' as Href);
+        router.replace('/profile' as Href);
         return;
       }
 

@@ -14,6 +14,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      initialRouteName="profile"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.text,
@@ -24,30 +25,6 @@ export default function TabLayout() {
           borderTopColor: colors.selected,
         },
       }}>
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={require('@/assets/images/tabIcons/home.png')}
-              style={[styles.icon, { height: size, tintColor: color, width: size }]}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="odds"
-        options={{
-          title: 'Odds',
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={require('@/assets/images/tabIcons/explore.png')}
-              style={[styles.icon, { height: size, tintColor: color, width: size }]}
-            />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="profile"
         options={{
@@ -72,6 +49,18 @@ export default function TabLayout() {
                 />
               ) : null}
             </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="odds"
+        options={{
+          title: 'Odds',
+          tabBarIcon: ({ color, size }) => (
+            <Image
+              source={require('@/assets/images/tabIcons/explore.png')}
+              style={[styles.icon, { height: size, tintColor: color, width: size }]}
+            />
           ),
         }}
       />

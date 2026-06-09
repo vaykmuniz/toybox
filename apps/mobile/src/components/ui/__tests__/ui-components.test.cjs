@@ -268,5 +268,5 @@ test('ProfileToyGrid renders toy captions visibly', () => {
     ],
   });
 
-  assert.deepEqual(collectTextChildren(element), ['Toy grid', '1 posts', 'Desk robot']);
+  assert.deepEqual(collectTextChildren(element), ['Your Toys', '1 toys', 'Desk robot']);
 });

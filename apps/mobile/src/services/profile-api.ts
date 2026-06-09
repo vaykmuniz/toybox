@@ -1,6 +1,6 @@
 import type { ImageProps } from 'expo-image';
 
-import { getApiSetupError, resolveApiUrl, type FeedApiOptions } from './feed-api';
+import { getApiSetupError, resolveApiUrl, type ApiOptions } from './api';
 
 type ProfileImageSource = ImageProps['source'];
 
@@ -34,7 +34,7 @@ export interface Badge {
   text: string;
 }
 
-export type ProfileApiOptions = FeedApiOptions;
+export type ProfileApiOptions = ApiOptions;
 
 export interface FetchProfileOptions extends ProfileApiOptions {
   timeoutMs?: number;
