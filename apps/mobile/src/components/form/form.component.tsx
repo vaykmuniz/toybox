@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { fonts } from '@/constants/fonts';
+
 import { formInputClasses } from './form.styles';
 import type { FormInputProps, FormModeButtonProps, PasswordInputProps } from './form.types';
 
@@ -37,7 +39,7 @@ const styles = StyleSheet.create({
   },
   modeButtonText: {
     color: '#60646C',
-    fontFamily: 'Spline Sans',
+    fontFamily: fonts.semibold,
     fontSize: 14,
     fontWeight: '900',
     textAlign: 'center',

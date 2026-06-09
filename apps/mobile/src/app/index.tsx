@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { router } from 'expo-router';
 import type { Href } from 'expo-router';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -169,15 +169,17 @@ export default function AuthScreen() {
             contentContainerStyle={{ paddingBottom: 32 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
-            <View className="min-h-full justify-center gap-6">
-              <View className="gap-2">
-                <CustomText variant="authBrand">Toybox</CustomText>
-                <CustomText variant="authIntro">
-                  Sign in to keep your toys, matches, and profile close at hand.
+            <View className="h-full justify-startgap-6">
+              <View className="gap-2 flex-row items-center justify-center pt-8">
+                <CustomText className="text-4xl font-black text-white shadow">
+                  Toybox
+                </CustomText>
+                <CustomText className="max-w-sm font-display text-base font-semibold leading-6 text-white/85">
+                  Claw toys and register!
                 </CustomText>
               </View>
 
-              <View className="gap-5 rounded-[28px] bg-white/95 p-5 shadow-lg">
+              <View className="gap-5 rounded-3xl p-5">
                 <View className="flex-row rounded-full bg-theme-element p-1">
                   <FormModeButton
                     active={isLogin}
@@ -192,8 +194,8 @@ export default function AuthScreen() {
                 </View>
 
                 <View className="gap-1">
-                  <CustomText variant="authFormTitle">{formTitle}</CustomText>
-                  <CustomText variant="authFormHelp">
+                  <CustomText className="text-white font-black">{formTitle}</CustomText>
+                  <CustomText className="text-white text-sm font-light">
                     {isLogin
                       ? 'Use your username and password to continue.'
                       : 'Fill in your details to start your account.'}

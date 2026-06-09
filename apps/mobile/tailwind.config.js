@@ -35,8 +35,18 @@ module.exports = {
       },
       fontFamily: {
         display: [
-          'Spline Sans',
-          'Inter',
+          'Fredoka_600SemiBold',
+          'Fredoka_400Regular',
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif',
+          'Apple Color Emoji',
+          'Segoe UI Emoji',
+          'Segoe UI Symbol',
+          'Noto Color Emoji',
+        ],
+        body: [
+          'Fredoka_400Regular',
           'ui-sans-serif',
           'system-ui',
           'sans-serif',
