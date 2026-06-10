@@ -107,30 +107,10 @@ const withoutApiEnv = async (fn) => {
 };
 
 const sampleProfile = {
-  id: '1',
-  name: 'Gabriel',
-  handle: '@gabriel',
+  id: 'user-1',
+  name: 'Toy Collector',
+  handle: '@collector',
   avatar_url: 'http://localhost:8000/static/mocks/avatar.png',
-  bio: 'Toy collector, daily discoveries, and tiny worlds from Toybox.',
-  stats: {
-    posts: 9,
-    followers: 1248,
-    following: 312,
-  },
-  badges: [
-    {
-      description: 'Pega um bixo por dia',
-      text: 'FIRE',
-    },
-    {
-      description: 'Perfil em destaque',
-      text: 'STAR',
-    },
-    {
-      description: 'Colecao crescendo',
-      text: 'RARE',
-    },
-  ],
   toys: [
     {
       id: 'toy-1',
@@ -159,12 +139,12 @@ const sampleProfile = {
     );
   });
 
-  await test('fetchProfile requests the FastAPI profile endpoint', async () => {
+  await test('fetchProfile requests the FastAPI profile endpoint with auth token', async () => {
     const fetchCalls = [];
 
     await withFetch(
-      async (url) => {
-        fetchCalls.push(url);
+      async (url, options) => {
+        fetchCalls.push({ url, options });
 
         return {
           ok: true,
@@ -173,11 +153,16 @@ const sampleProfile = {
         };
       },
       async () => {
-        const profile = await fetchProfile({ apiUrl: 'http://localhost:8000' });
+        const profile = await fetchProfile({
+          accessToken: 'signed.jwt.token',
+          apiUrl: 'http://localhost:8000',
+        });
 
-        assert.deepEqual(fetchCalls, ['http://localhost:8000/profile']);
-        assert.equal(profile.name, 'Gabriel');
-        assert.equal(profile.stats.posts, 9);
+        assert.equal(fetchCalls[0].url, 'http://localhost:8000/profile');
+        assert.deepEqual(fetchCalls[0].options.headers, {
+          Authorization: 'Bearer signed.jwt.token',
+        });
+        assert.equal(profile.name, 'Toy Collector');
         assert.deepEqual(
           profile.toys.map((toy) => toy.id),
           ['toy-1', 'toy-2']
@@ -186,7 +171,7 @@ const sampleProfile = {
     );
   });
 
-  await test('fetchProfile returns complete profile metadata and static image URLs', async () => {
+  await test('fetchProfile returns profile identity and static image URLs', async () => {
     await withFetch(
       async () => ({
         ok: true,
@@ -194,11 +179,16 @@ const sampleProfile = {
         json: async () => sampleProfile,
       }),
       async () => {
-        const profile = await fetchProfile({ apiUrl: 'http://localhost:8000' });
+        const profile = await fetchProfile({
+          accessToken: 'signed.jwt.token',
+          apiUrl: 'http://localhost:8000',
+        });
 
-        assert.equal(profile.handle, '@gabriel');
-        assert.equal(profile.bio, 'Toy collector, daily discoveries, and tiny worlds from Toybox.');
-        assert.equal(profile.badges[0].text, 'FIRE');
+        assert.equal(profile.id, 'user-1');
+        assert.equal(profile.handle, '@collector');
+        assert.equal('bio' in profile, false);
+        assert.equal('stats' in profile, false);
+        assert.equal('badges' in profile, false);
         assert.match(profile.avatar_url, /\/static\/mocks\/avatar\.png$/);
         assert.match(profile.toys[0].media_url, /\/static\/mocks\/toy-1\.png$/);
       }

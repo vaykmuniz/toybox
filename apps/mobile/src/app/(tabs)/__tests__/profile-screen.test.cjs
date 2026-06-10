@@ -124,20 +124,13 @@ Module._resolveFilename = function resolveFilename(request, parent, isMain, opti
   }
 };
 
-const { applyUserToProfile, default: ProfileScreen } = require('../profile');
+const { default: ProfileScreen } = require('../profile');
 
 const sampleProfile = {
-  id: '1',
-  name: 'Gabriel',
-  handle: '@gabriel',
+  id: 'user-1',
+  name: 'Toy Collector',
+  handle: '@collector',
   avatar_url: 'http://localhost:8000/static/mocks/avatar.png',
-  bio: 'Toy collector, daily discoveries, and tiny worlds from Toybox.',
-  stats: {
-    posts: 9,
-    followers: 1248,
-    following: 312,
-  },
-  badges: [],
   toys: [
     {
       id: 'toy-1',
@@ -213,21 +206,6 @@ const collectText = (element, result = []) => {
 
 const findPressableByText = (element, text) =>
   collectPressables(element).find((pressable) => collectText(pressable).includes(text));
-
-test('applyUserToProfile uses persisted user identity and keeps collection metadata', () => {
-  const profile = applyUserToProfile(sampleProfile, sampleUser);
-
-  assert.equal(profile.id, 'user-1');
-  assert.equal(profile.name, 'Toy Collector');
-  assert.equal(profile.handle, '@collector');
-  assert.equal(profile.stats, sampleProfile.stats);
-  assert.equal(profile.toys, sampleProfile.toys);
-  assert.equal(profile.avatar_url, sampleProfile.avatar_url);
-});
-
-test('applyUserToProfile falls back to API profile identity without a user', () => {
-  assert.equal(applyUserToProfile(sampleProfile, null), sampleProfile);
-});
 
 test('ProfileScreen routes upload action to upload screen', () => {
   routerCalls.length = 0;

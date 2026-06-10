@@ -11,16 +11,7 @@ export interface GetProfile {
   name: string;
   handle: string;
   avatar_url: ProfileImageSource;
-  bio: string;
-  stats: ProfileStats;
-  badges: Badge[];
   toys: Toy[];
-}
-
-export interface ProfileStats {
-  posts: number;
-  followers: number;
-  following: number;
 }
 
 export interface Toy {
@@ -29,14 +20,10 @@ export interface Toy {
   caption?: string;
 }
 
-export interface Badge {
-  description: string;
-  text: string;
-}
-
 export type ProfileApiOptions = ApiOptions;
 
 export interface FetchProfileOptions extends ProfileApiOptions {
+  accessToken?: string;
   timeoutMs?: number;
 }
 
@@ -45,6 +32,7 @@ export const getProfileEndpoint = (options: ProfileApiOptions = {}) => {
 };
 
 export const fetchProfile = async ({
+  accessToken,
   timeoutMs = DefaultProfileTimeoutMs,
   ...apiOptions
 }: FetchProfileOptions = {}): Promise<GetProfile> => {
@@ -62,7 +50,10 @@ export const fetchProfile = async ({
   let response: Response;
 
   try {
-    response = await fetch(profileEndpoint, { signal: abortController.signal });
+    response = await fetch(profileEndpoint, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      signal: abortController.signal,
+    });
   } catch (fetchError) {
     if (abortController.signal.aborted) {
       throw new Error(

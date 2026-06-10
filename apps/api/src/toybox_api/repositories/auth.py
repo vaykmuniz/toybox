@@ -7,6 +7,8 @@ import asyncpg
 
 from toybox_api.config import get_settings
 
+DefaultAvatarPath = "mocks/avatar.png"
+
 
 @dataclass(frozen=True)
 class UserConflictRecord:
@@ -85,9 +87,10 @@ class AuthRepository:
                 row = await connection.fetchrow(
                     """
                     insert into users (
-                        id, email, username, password_hash, name, is_valid, token, token_expires_at
+                        id, email, username, password_hash, name, avatar_path, is_valid, token,
+                        token_expires_at
                     )
-                    values ($1, $2, $3, $4, $5, false, $6, $7)
+                    values ($1, $2, $3, $4, $5, $6, false, $7, $8)
                     returning id, email, username, name, is_valid, token, token_expires_at
                     """,
                     str(uuid4()),
@@ -95,6 +98,7 @@ class AuthRepository:
                     username,
                     password_hash,
                     name,
+                    DefaultAvatarPath,
                     token,
                     token_expires_at,
                 )

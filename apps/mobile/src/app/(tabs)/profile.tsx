@@ -4,28 +4,14 @@ import GradientBackground from '@/components/ui/gradient-background/gradient-bac
 import { ProfileHeaderCard } from '@/components/views/profile/profile-header-card.component';
 import { ProfileToyGrid } from '@/components/views/profile/profile-toy-grid.component';
 import { useAuthSession } from '@/hooks/use-auth-session.hook';
-import { type GetProfile, useGetProfile } from '@/hooks/use-get-profile.hook';
-import type { AuthSession } from '@/services/auth-session-storage';
-
-export const applyUserToProfile = (profile: GetProfile, user: AuthSession | null): GetProfile => {
-  if (!user) {
-    return profile;
-  }
-
-  return {
-    ...profile,
-    handle: `@${user.username}`,
-    id: user.id,
-    name: user.name,
-  };
-};
+import { useGetProfile } from '@/hooks/use-get-profile.hook';
 
 export default function ProfileScreen() {
-  const { isLoading: isAuthLoading, user } = useAuthSession();
+  const { isLoading: isAuthLoading } = useAuthSession();
   const profileRequest = useGetProfile();
   const showLoading = isAuthLoading || (profileRequest.isLoading && !profileRequest.profile);
   const showError = profileRequest.error && !profileRequest.profile;
-  const profile = profileRequest.profile ? applyUserToProfile(profileRequest.profile, user) : null;
+  const profile = profileRequest.profile;
 
 
   return (

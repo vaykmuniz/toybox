@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { useAuthSession } from '@/hooks/use-auth-session.hook';
 import { fetchProfile, type GetProfile } from '@/services/profile-api';
-export type { Badge, GetProfile, ProfileStats, Toy } from '@/services/profile-api';
+export type { GetProfile, Toy } from '@/services/profile-api';
 
 export interface GetProfileResult {
   error: Error | null;
@@ -15,28 +16,39 @@ const normalizeProfileError = (fetchError: unknown) => {
 };
 
 export const useGetProfile = (): GetProfileResult => {
+  const { isLoading: isAuthLoading, user } = useAuthSession();
   const [profile, setProfile] = useState<GetProfile | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refetch = useCallback(async () => {
+    if (isAuthLoading) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      setProfile(await fetchProfile());
+      setProfile(await fetchProfile({ accessToken: user?.access_token }));
     } catch (fetchError) {
       console.log(fetchError);
       setError(normalizeProfileError(fetchError));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthLoading, user?.access_token]);
 
   useEffect(() => {
     let isMounted = true;
 
-    fetchProfile()
+    if (isAuthLoading) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    fetchProfile({ accessToken: user?.access_token })
       .then((nextProfile) => {
         if (isMounted) {
           setProfile(nextProfile);
@@ -57,7 +69,7 @@ export const useGetProfile = (): GetProfileResult => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthLoading, user?.access_token]);
 
   return {
     error,
