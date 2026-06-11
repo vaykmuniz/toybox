@@ -19,7 +19,13 @@ import {
 import GradientBackground from '@/components/ui/gradient-background/gradient-background.component';
 import CustomText from '@/components/ui/text/text.component';
 import { useAuthSession } from '@/hooks/use-auth-session.hook';
-import { login, register } from '@/services/auth-api';
+import {
+  AuthApiError,
+  AuthLoginErrorMessage,
+  AuthRegisterErrorMessage,
+  login,
+  register,
+} from '@/services/auth-api';
 
 type AuthMode = 'login' | 'register';
 
@@ -151,7 +157,13 @@ export default function AuthScreen() {
       setStatusMessage('Account created. Check your email to verify it before logging in.');
     } catch (error) {
       setStatusKind('error');
-      setStatusMessage(error instanceof Error ? error.message : 'Something went wrong.');
+      setStatusMessage(
+        error instanceof AuthApiError
+          ? error.message
+          : isLogin
+            ? AuthLoginErrorMessage
+            : AuthRegisterErrorMessage
+      );
     } finally {
       setIsSubmitting(false);
     }

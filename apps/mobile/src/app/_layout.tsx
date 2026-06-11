@@ -33,6 +33,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="upload" />
+          <Stack.Screen name="settings" />
         </Stack>
       </ThemeProvider>
     </AuthProvider>

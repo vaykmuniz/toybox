@@ -2,6 +2,25 @@ import { getApiSetupError, resolveApiUrl, type ApiOptions } from './api';
 
 const DefaultAuthTimeoutMs = 10_000;
 
+export const AuthLoginErrorMessage =
+  "We couldn't log you in. Check your username and password and try again.";
+export const AuthRegisterErrorMessage =
+  "We couldn't create your account. Please check your details and try again.";
+export const AuthConnectivityErrorMessage =
+  "We couldn't reach Toybox. Check your connection and try again.";
+
+export type AuthApiErrorKind = 'login' | 'register' | 'connectivity';
+
+export class AuthApiError extends Error {
+  kind: AuthApiErrorKind;
+
+  constructor(kind: AuthApiErrorKind) {
+    super(getAuthErrorMessage(kind));
+    this.name = 'AuthApiError';
+    this.kind = kind;
+  }
+}
+
 export interface LoginRequest {
   username: string;
   password: string;
@@ -98,7 +117,7 @@ const postAuthJson = async <ResponseBody>({
   const setupError = getApiSetupError(apiOptions);
 
   if (setupError) {
-    throw setupError;
+    throw new AuthApiError('connectivity');
   }
 
   const abortController = new AbortController();
@@ -116,57 +135,27 @@ const postAuthJson = async <ResponseBody>({
       method: 'POST',
       signal: abortController.signal,
     });
-  } catch (fetchError) {
-    if (abortController.signal.aborted) {
-      throw new Error(
-        `Failed to ${endpointName} through ${url}: timed out after ${timeoutMs}ms`
-      );
-    }
-
-    const message = fetchError instanceof Error ? fetchError.message : 'Unknown network error';
-
-    throw new Error(`Failed to ${endpointName} through ${url}: ${message}`);
+  } catch {
+    throw new AuthApiError('connectivity');
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!response.ok) {
-    const detail = await getResponseDetail(response);
-    const suffix = detail ? `: ${detail}` : '';
-
-    throw new Error(`Failed to ${endpointName}: ${response.status}${suffix}`);
+    throw new AuthApiError(endpointName);
   }
 
   return response.json() as Promise<ResponseBody>;
 };
 
-const getResponseDetail = async (response: Response) => {
-  try {
-    const body = (await response.json()) as { detail?: unknown };
-
-    if (typeof body.detail === 'string') {
-      return body.detail;
-    }
-
-    if (Array.isArray(body.detail)) {
-      return body.detail
-        .map((item) => {
-          if (typeof item === 'string') {
-            return item;
-          }
-
-          if (item && typeof item === 'object' && 'msg' in item) {
-            return String(item.msg);
-          }
-
-          return null;
-        })
-        .filter(Boolean)
-        .join(' ');
-    }
-  } catch {
-    return '';
+const getAuthErrorMessage = (kind: AuthApiErrorKind) => {
+  if (kind === 'login') {
+    return AuthLoginErrorMessage;
   }
 
-  return '';
+  if (kind === 'register') {
+    return AuthRegisterErrorMessage;
+  }
+
+  return AuthConnectivityErrorMessage;
 };

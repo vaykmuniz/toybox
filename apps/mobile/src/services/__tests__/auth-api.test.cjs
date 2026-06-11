@@ -69,6 +69,9 @@ Module._resolveFilename = function resolveFilename(request, parent, isMain, opti
 };
 
 const {
+  AuthConnectivityErrorMessage,
+  AuthLoginErrorMessage,
+  AuthRegisterErrorMessage,
   getLoginEndpoint,
   getRegisterEndpoint,
   login,
@@ -135,6 +138,26 @@ const registerPayload = {
   username: 'collector',
   name: 'Toy Collector',
   password: 'secret',
+};
+
+const rejectMessage = async (fn) => {
+  try {
+    await fn();
+  } catch (error) {
+    return error.message;
+  }
+
+  throw new Error('Expected function to reject.');
+};
+
+const assertNoRawAuthDetails = (message, forbiddenValues) => {
+  for (const value of forbiddenValues) {
+    assert.equal(
+      message.includes(value),
+      false,
+      `Expected "${message}" not to include "${value}"`
+    );
+  }
 };
 
 (async () => {
@@ -230,7 +253,7 @@ const registerPayload = {
     );
   });
 
-  await test('login includes API detail when credentials are rejected', async () => {
+  await test('login hides status codes and API details when credentials are rejected', async () => {
     await withFetch(
       async () => ({
         ok: false,
@@ -238,15 +261,44 @@ const registerPayload = {
         json: async () => ({ detail: 'Invalid username or password.' }),
       }),
       async () => {
-        await assert.rejects(
-          () => login({ apiUrl: 'http://localhost:8000', payload: loginPayload }),
-          /Failed to login: 401: Invalid username or password\./
+        const message = await rejectMessage(() =>
+          login({ apiUrl: 'http://localhost:8000', payload: loginPayload })
         );
+
+        assert.equal(message, AuthLoginErrorMessage);
+        assertNoRawAuthDetails(message, [
+          '401',
+          'Invalid username or password.',
+          'http://localhost:8000/login',
+        ]);
       }
     );
   });
 
-  await test('register includes API detail when the account conflicts', async () => {
+  await test('login hides pending validation details when the account is not verified', async () => {
+    await withFetch(
+      async () => ({
+        ok: false,
+        status: 403,
+        json: async () => ({ detail: 'Account is not verified.' }),
+      }),
+      async () => {
+        const message = await rejectMessage(() =>
+          login({ apiUrl: 'http://localhost:8000', payload: loginPayload })
+        );
+
+        assert.equal(message, AuthLoginErrorMessage);
+        assertNoRawAuthDetails(message, [
+          '403',
+          'Account is not verified.',
+          'pending',
+          'validation',
+        ]);
+      }
+    );
+  });
+
+  await test('register hides status codes and API details when the account conflicts', async () => {
     await withFetch(
       async () => ({
         ok: false,
@@ -254,24 +306,58 @@ const registerPayload = {
         json: async () => ({ detail: 'Username is already used.' }),
       }),
       async () => {
-        await assert.rejects(
-          () => register({ apiUrl: 'http://localhost:8000', payload: registerPayload }),
-          /Failed to register: 409: Username is already used\./
+        const message = await rejectMessage(() =>
+          register({ apiUrl: 'http://localhost:8000', payload: registerPayload })
         );
+
+        assert.equal(message, AuthRegisterErrorMessage);
+        assertNoRawAuthDetails(message, [
+          '409',
+          'Username is already used.',
+          'http://localhost:8000/register',
+        ]);
       }
     );
   });
 
-  await test('login includes the endpoint when the network request fails', async () => {
+  await test('register hides validation details from API error responses', async () => {
+    await withFetch(
+      async () => ({
+        ok: false,
+        status: 422,
+        json: async () => ({
+          detail: [{ msg: 'String should have at least 1 character' }],
+        }),
+      }),
+      async () => {
+        const message = await rejectMessage(() =>
+          register({ apiUrl: 'http://localhost:8000', payload: registerPayload })
+        );
+
+        assert.equal(message, AuthRegisterErrorMessage);
+        assertNoRawAuthDetails(message, [
+          '422',
+          'String should have at least 1 character',
+        ]);
+      }
+    );
+  });
+
+  await test('login hides the endpoint when the network request fails', async () => {
     await withFetch(
       async () => {
         throw new Error('connect ECONNREFUSED');
       },
       async () => {
-        await assert.rejects(
-          () => login({ apiUrl: 'http://192.168.1.20:8000', payload: loginPayload }),
-          /Failed to login through http:\/\/192\.168\.1\.20:8000\/login: connect ECONNREFUSED/
+        const message = await rejectMessage(() =>
+          login({ apiUrl: 'http://192.168.1.20:8000', payload: loginPayload })
         );
+
+        assert.equal(message, AuthConnectivityErrorMessage);
+        assertNoRawAuthDetails(message, [
+          'http://192.168.1.20:8000/login',
+          'connect ECONNREFUSED',
+        ]);
       }
     );
   });
@@ -288,10 +374,14 @@ const registerPayload = {
       },
       async () => {
         try {
-          await assert.rejects(
-            () => register({ payload: registerPayload }),
-            /Cannot reach the API through Expo tunnel host/
-          );
+          const message = await rejectMessage(() => register({ payload: registerPayload }));
+
+          assert.equal(message, AuthConnectivityErrorMessage);
+          assertNoRawAuthDetails(message, [
+            'Cannot reach the API through Expo tunnel host',
+            'uc2i2ko-anonymous-8081.exp.direct',
+            '192.168.1.20:8000',
+          ]);
           assert.equal(fetchWasCalled, false);
         } finally {
           delete mockedExpoConstants.expoConfig;
@@ -309,15 +399,19 @@ const registerPayload = {
           });
         }),
       async () => {
-        await assert.rejects(
-          () =>
-            login({
-              apiUrl: 'http://192.168.1.20:8000',
-              payload: loginPayload,
-              timeoutMs: 1,
-            }),
-          /Failed to login through http:\/\/192\.168\.1\.20:8000\/login: timed out after 1ms/
+        const message = await rejectMessage(() =>
+          login({
+            apiUrl: 'http://192.168.1.20:8000',
+            payload: loginPayload,
+            timeoutMs: 1,
+          })
         );
+
+        assert.equal(message, AuthConnectivityErrorMessage);
+        assertNoRawAuthDetails(message, [
+          'http://192.168.1.20:8000/login',
+          'timed out after 1ms',
+        ]);
       }
     );
   });

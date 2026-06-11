@@ -40,7 +40,7 @@ export default function ProfileScreen() {
             </View>
           ) : profile ? (
             <View className="gap-5">
-              <ProfileHeaderCard onProfileUpdated={profileRequest.refetch} profile={profile} />
+              <ProfileHeaderCard profile={profile} />
               <ProfileToyGrid toys={profile.toys} />
             </View>
           ) : null}

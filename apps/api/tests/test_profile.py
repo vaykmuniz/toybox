@@ -9,9 +9,10 @@ import pytest
 from fastapi import HTTPException
 
 from toybox_api.config import Settings, get_settings
+from toybox_api.controllers import profile as profile_controller
 from toybox_api.main import app
 from toybox_api.repositories import profile as profile_repository
-from toybox_api.repositories.profile import ProfileRecord, ProfileRepository
+from toybox_api.repositories.profile import ProfileRecord, ProfileRepository, ProfileToyRecord
 from toybox_api.services.authentication import AuthenticatedUser
 from toybox_api.services.profile import ProfileService
 
@@ -70,6 +71,25 @@ async def test_profile_rejects_invalid_bearer_token() -> None:
 
 
 async def test_profile_returns_user_profile_from_database(monkeypatch) -> None:
+    fake_s3_client = FakeS3Client()
+
+    monkeypatch.setattr(
+        "toybox_api.services.profile.boto3.client",
+        lambda *args, **kwargs: fake_s3_client,
+    )
+    monkeypatch.setattr(
+        profile_controller,
+        "service",
+        ProfileService(
+            settings=Settings(
+                aws_access_key_id="access-key",
+                aws_secret_access_key="secret-key",
+                aws_region="us-east-1",
+                aws_bucket_name="toybox-bucket",
+            )
+        ),
+    )
+
     class FakeConnection:
         async def fetchrow(self, query, user_id):
             assert "from users" in query
@@ -79,12 +99,13 @@ async def test_profile_returns_user_profile_from_database(monkeypatch) -> None:
                 "id": "user-1",
                 "username": "collector",
                 "name": "Toy Collector",
-                "avatar_path": None,
+                "avatar_url": None,
             }
 
         async def fetch(self, query, user_id):
             assert "from toy" in query
             assert "where user_id = $1" in query
+            assert "object_key" in query
             assert user_id == "user-1"
 
             return [
@@ -92,6 +113,7 @@ async def test_profile_returns_user_profile_from_database(monkeypatch) -> None:
                     "id": "11111111-1111-1111-1111-111111111111",
                     "name": "Desk robot",
                     "image_url": "https://cdn.example.com/toys/robot.jpg",
+                    "object_key": "toys/robot.jpg",
                 }
             ]
 
@@ -119,11 +141,21 @@ async def test_profile_returns_user_profile_from_database(monkeypatch) -> None:
         "toys": [
             {
                 "id": "11111111-1111-1111-1111-111111111111",
-                "media_url": "https://cdn.example.com/toys/robot.jpg",
+                "media_url": "https://uploads.example.com/toys/robot.jpg?signature=test",
                 "caption": "Desk robot",
             }
         ],
     }
+    assert fake_s3_client.calls == [
+        {
+            "operation": "get_object",
+            "params": {
+                "Bucket": "toybox-bucket",
+                "Key": "toys/robot.jpg",
+            },
+            "expires_in": 300,
+        }
+    ]
     assert "bio" not in payload
     assert "stats" not in payload
     assert "badges" not in payload
@@ -163,12 +195,14 @@ async def test_profile_uploaded_toy_name_is_returned_as_caption(monkeypatch) -> 
     class FakeConnection:
         async def fetch(self, query, user_id):
             assert "where user_id = $1" in query
+            assert "object_key" in query
             assert user_id == "user-1"
             return [
                 {
                     "id": "11111111-1111-1111-1111-111111111111",
                     "name": "Desk robot",
                     "image_url": "https://cdn.example.com/toys/robot.jpg",
+                    "object_key": "toys/robot.jpg",
                 }
             ]
 
@@ -184,10 +218,68 @@ async def test_profile_uploaded_toy_name_is_returned_as_caption(monkeypatch) -> 
 
     assert toys[0].caption == "Desk robot"
     assert toys[0].media_path == "https://cdn.example.com/toys/robot.jpg"
+    assert toys[0].object_key == "toys/robot.jpg"
     assert toys[0].is_absolute_url is True
 
 
-async def test_profile_returns_uploaded_avatar_url_from_database(monkeypatch) -> None:
+async def test_profile_fails_when_toy_media_cannot_be_presigned() -> None:
+    class FakeRepository:
+        async def get_profile(self, user_id: str):
+            return ProfileRecord(
+                id=user_id,
+                name="Toy Collector",
+                handle="@collector",
+                avatar_url=None,
+                toys=[
+                    ProfileToyRecord(
+                        id="11111111-1111-1111-1111-111111111111",
+                        media_path="https://cdn.example.com/toys/robot.jpg",
+                        object_key="toys/robot.jpg",
+                        caption="Desk robot",
+                        is_absolute_url=True,
+                    )
+                ],
+            )
+
+    service = ProfileService(
+        settings=Settings(
+            aws_access_key_id=None,
+            aws_secret_access_key=None,
+            aws_region=None,
+            aws_bucket_name=None,
+        ),
+        repository=FakeRepository(),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        await service.get_profile(request=None, user=AuthenticatedUser(id="user-1"))
+
+    assert error.value.status_code == 500
+    assert "Missing S3 configuration" in error.value.detail
+    assert "AWS_BUCKET_NAME" in error.value.detail
+
+
+async def test_profile_returns_signed_uploaded_avatar_url_from_database(monkeypatch) -> None:
+    fake_s3_client = FakeS3Client()
+
+    monkeypatch.setattr(
+        "toybox_api.services.profile.boto3.client",
+        lambda *args, **kwargs: fake_s3_client,
+    )
+    monkeypatch.setattr(
+        profile_controller,
+        "service",
+        ProfileService(
+            settings=Settings(
+                aws_access_key_id="access-key",
+                aws_secret_access_key="secret-key",
+                aws_region="us-east-1",
+                aws_bucket_name="toybox-bucket",
+                s3_public_base_url="https://cdn.example.com",
+            )
+        ),
+    )
+
     class FakeConnection:
         async def fetchrow(self, query, user_id):
             assert "from users" in query
@@ -197,7 +289,7 @@ async def test_profile_returns_uploaded_avatar_url_from_database(monkeypatch) ->
                 "id": "user-1",
                 "username": "collector",
                 "name": "Toy Collector",
-                "avatar_path": "https://cdn.example.com/avatars/user-1/avatar.jpg",
+                "avatar_url": "https://cdn.example.com/avatars/user-1/avatar.jpg",
             }
 
         async def fetch(self, query, user_id):
@@ -218,7 +310,19 @@ async def test_profile_returns_uploaded_avatar_url_from_database(monkeypatch) ->
         )
 
     assert response.status_code == 200
-    assert response.json()["avatar_url"] == "https://cdn.example.com/avatars/user-1/avatar.jpg"
+    assert response.json()["avatar_url"] == (
+        "https://uploads.example.com/avatars/user-1/avatar.jpg?signature=test"
+    )
+    assert fake_s3_client.calls == [
+        {
+            "operation": "get_object",
+            "params": {
+                "Bucket": "toybox-bucket",
+                "Key": "avatars/user-1/avatar.jpg",
+            },
+            "expires_in": 300,
+        }
+    ]
 
 
 class FakeS3Client:
@@ -302,7 +406,14 @@ async def test_update_avatar_rejects_object_key_for_another_user() -> None:
     assert error.value.detail == "Avatar object key does not belong to the authenticated user."
 
 
-async def test_update_avatar_persists_public_url() -> None:
+async def test_update_avatar_persists_stable_url_and_returns_signed_url(monkeypatch) -> None:
+    fake_s3_client = FakeS3Client()
+
+    monkeypatch.setattr(
+        "toybox_api.services.profile.boto3.client",
+        lambda *args, **kwargs: fake_s3_client,
+    )
+
     class FakeRequest:
         def url_for(self, name, path):
             return f"http://testserver/static/{path}"
@@ -311,19 +422,21 @@ async def test_update_avatar_persists_public_url() -> None:
         def __init__(self) -> None:
             self.calls = []
 
-        async def update_avatar_path(self, user_id: str, avatar_path: str):
-            self.calls.append({"user_id": user_id, "avatar_path": avatar_path})
+        async def update_avatar_url(self, user_id: str, avatar_url: str):
+            self.calls.append({"user_id": user_id, "avatar_url": avatar_url})
             return ProfileRecord(
                 id=user_id,
                 name="Toy Collector",
                 handle="@collector",
-                avatar_path=avatar_path,
+                avatar_url=avatar_url,
                 toys=[],
             )
 
     repository = FakeRepository()
     service = ProfileService(
         settings=Settings(
+            aws_access_key_id="access-key",
+            aws_secret_access_key="secret-key",
             aws_region="us-east-1",
             aws_bucket_name="toybox-bucket",
             s3_public_base_url="https://cdn.example.com",
@@ -340,7 +453,17 @@ async def test_update_avatar_persists_public_url() -> None:
     assert repository.calls == [
         {
             "user_id": "user-1",
-            "avatar_path": "https://cdn.example.com/avatars/user-1/avatar.png",
+            "avatar_url": "https://cdn.example.com/avatars/user-1/avatar.png",
         }
     ]
-    assert profile.avatar_url == "https://cdn.example.com/avatars/user-1/avatar.png"
+    assert profile.avatar_url == "https://uploads.example.com/avatars/user-1/avatar.png?signature=test"
+    assert fake_s3_client.calls == [
+        {
+            "operation": "get_object",
+            "params": {
+                "Bucket": "toybox-bucket",
+                "Key": "avatars/user-1/avatar.png",
+            },
+            "expires_in": 300,
+        }
+    ]

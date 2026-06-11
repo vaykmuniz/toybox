@@ -55,7 +55,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "tsc --noEmit && pnpm run test:unit",
-    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/services/__tests__/api.test.cjs && node ./src/services/__tests__/profile-api.test.cjs && node ./src/services/__tests__/toy-upload-api.test.cjs && node ./src/services/__tests__/auth-api.test.cjs && node ./src/services/__tests__/auth-session-storage.test.cjs && node './src/app/(tabs)/__tests__/profile-screen.test.cjs'"
+    "test:unit": "node ./src/components/ui/__tests__/ui-components.test.cjs && node ./src/components/views/profile/__tests__/profile-header-card.test.cjs && node ./src/services/__tests__/api.test.cjs && node ./src/services/__tests__/profile-api.test.cjs && node ./src/services/__tests__/toy-upload-api.test.cjs && node ./src/services/__tests__/odds-api.test.cjs && node ./src/services/__tests__/auth-api.test.cjs && node ./src/services/__tests__/auth-session-storage.test.cjs && node './src/app/(tabs)/__tests__/profile-screen.test.cjs' && node './src/app/(tabs)/__tests__/odds-screen.test.cjs' && node ./src/app/__tests__/settings-screen.test.cjs"
   },
   "private": true
 }

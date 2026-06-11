@@ -9,6 +9,7 @@ from toybox_api.config import Settings, get_settings
 class ProfileToyRecord:
     id: str
     media_path: str
+    object_key: str
     caption: str | None = None
     is_absolute_url: bool = False
 
@@ -18,7 +19,7 @@ class ProfileRecord:
     id: str
     name: str
     handle: str
-    avatar_path: str | None
+    avatar_url: str | None
     toys: list[ProfileToyRecord]
 
 
@@ -35,7 +36,7 @@ class ProfileRepository:
         try:
             user_row = await connection.fetchrow(
                 """
-                select id, username, name, avatar_path
+                select id, username, name, avatar_url
                 from users
                 where id = $1
                 """,
@@ -53,21 +54,21 @@ class ProfileRepository:
             id=user_row["id"],
             name=user_row["name"],
             handle=f"@{user_row['username']}",
-            avatar_path=user_row["avatar_path"],
+            avatar_url=user_row["avatar_url"],
             toys=toys,
         )
 
-    async def update_avatar_path(self, user_id: str, avatar_path: str) -> ProfileRecord:
+    async def update_avatar_url(self, user_id: str, avatar_url: str) -> ProfileRecord:
         connection = await asyncpg.connect(self.settings.database_url)
         try:
             result = await connection.execute(
                 """
                 update users
-                set avatar_path = $2
+                set avatar_url = $2
                 where id = $1
                 """,
                 user_id,
-                avatar_path,
+                avatar_url,
             )
 
             if result == "UPDATE 0":
@@ -84,7 +85,7 @@ class ProfileRepository:
     ) -> ProfileRecord:
         user_row = await connection.fetchrow(
             """
-            select id, username, name, avatar_path
+            select id, username, name, avatar_url
             from users
             where id = $1
             """,
@@ -100,7 +101,7 @@ class ProfileRepository:
             id=user_row["id"],
             name=user_row["name"],
             handle=f"@{user_row['username']}",
-            avatar_path=user_row["avatar_path"],
+            avatar_url=user_row["avatar_url"],
             toys=toys,
         )
 
@@ -113,7 +114,7 @@ class ProfileRepository:
         try:
             rows = await connection.fetch(
                 """
-                select id, name, image_url
+                select id, name, image_url, object_key
                 from toy
                 where user_id = $1
                 order by created_at desc
@@ -134,7 +135,7 @@ class ProfileRepository:
     ) -> list[ProfileToyRecord]:
         rows = await connection.fetch(
             """
-            select id, name, image_url
+            select id, name, image_url, object_key
             from toy
             where user_id = $1
             order by created_at desc
@@ -149,6 +150,7 @@ class ProfileRepository:
             ProfileToyRecord(
                 id=str(row["id"]),
                 media_path=row["image_url"],
+                object_key=row["object_key"],
                 caption=row["name"],
                 is_absolute_url=True,
             )
