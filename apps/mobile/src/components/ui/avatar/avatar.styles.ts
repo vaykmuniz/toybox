@@ -4,6 +4,15 @@ export const avatarBaseClassName = 'overflow-hidden rounded-full border border-w
 
 export const avatarImageClassName = 'h-full w-full rounded-full';
 
+export const avatarInitialsClassName = 'font-display font-bold text-ink/70';
+
+export const avatarInitialsSizeClassNames: Record<AvatarSize, string> = {
+  xs: 'text-xs',
+  sm: 'text-sm',
+  md: 'text-xl',
+  lg: 'text-3xl',
+};
+
 export const avatarSizeClassNames: Record<AvatarSize, string> = {
   xs: 'h-8 w-8',
   sm: 'h-10 w-10',

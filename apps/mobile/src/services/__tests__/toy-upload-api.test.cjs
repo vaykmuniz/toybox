@@ -206,6 +206,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
       async () => {
         const toy = await createToy({
           apiUrl: 'http://localhost:8000',
+          accessToken: 'token-1',
           name: 'Desk robot',
           imageUrl: 'https://cdn.example.com/toys/robot.png',
           objectKey: 'toys/robot.png',
@@ -213,6 +214,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
         });
 
         assert.equal(fetchCalls[0].url, 'http://localhost:8000/toys');
+        assert.equal(fetchCalls[0].options.headers.Authorization, 'Bearer token-1');
         assert.deepEqual(JSON.parse(fetchCalls[0].options.body), {
           name: 'Desk robot',
           image_url: 'https://cdn.example.com/toys/robot.png',
@@ -340,6 +342,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
       async () => {
         const toy = await uploadToy({
           apiUrl: 'http://localhost:8000',
+          accessToken: 'token-1',
           name: 'Desk robot',
           tries: 7,
           fileName: 'robot.png',
@@ -356,6 +359,7 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           ]
         );
         assert.equal(fetchCalls[1].options.headers['Content-Type'], 'image/png');
+        assert.equal(fetchCalls[2].options.headers.Authorization, 'Bearer token-1');
         assert.equal(JSON.parse(fetchCalls[2].options.body).tries, 7);
         assert.equal(toy.media_url, 'https://cdn.example.com/toys/robot.png');
       }

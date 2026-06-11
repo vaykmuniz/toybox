@@ -41,8 +41,16 @@ class ToyService:
             object_key=object_key,
         )
 
-    async def create_toy(self, name: str, image_url: str, object_key: str, tries: int) -> Toy:
+    async def create_toy(
+        self,
+        user_id: str,
+        name: str,
+        image_url: str,
+        object_key: str,
+        tries: int,
+    ) -> Toy:
         record = await self.repository.create_toy(
+            user_id=user_id,
             name=name.strip(),
             image_url=image_url,
             object_key=object_key,
@@ -88,7 +96,7 @@ class ToyService:
             aws_access_key_id=self.settings.aws_access_key_id,
             aws_secret_access_key=self.settings.aws_secret_access_key,
             region_name=self.settings.aws_region,
-            endpoint_url=self.settings.s3_endpoint_url,
+            endpoint_url=self.settings.s3_endpoint_url or None,
         )
 
     def _object_key(self, file_name: str) -> str:

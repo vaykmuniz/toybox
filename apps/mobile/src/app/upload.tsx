@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import GradientBackground from '@/components/ui/gradient-background/gradient-background.component';
 import { BottomTabInset } from '@/constants/layout';
+import { useAuthSession } from '@/hooks/use-auth-session.hook';
 import { useGetProfile } from '@/hooks/use-get-profile.hook';
 import { preparePickedToyImage } from '@/services/toy-upload-image';
 import { uploadToy, type ToyUploadFile } from '@/services/toy-upload-api';
@@ -50,6 +51,7 @@ const getUploadFileFromImage = async (image: PickedToyImage): Promise<ToyUploadF
 };
 
 export default function UploadScreen() {
+  const { user } = useAuthSession();
   const profileRequest = useGetProfile();
   const [name, setName] = useState('');
   const [tries, setTries] = useState('');
@@ -107,6 +109,7 @@ export default function UploadScreen() {
         fileName: image.fileName,
         contentType: image.contentType,
         file,
+        accessToken: user?.access_token,
       });
 
       setName('');

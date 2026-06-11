@@ -3,6 +3,7 @@ import { getApiSetupError, resolveApiUrl, type ApiOptions } from './api';
 const DefaultToyUploadTimeoutMs = 20_000;
 
 export interface ToyUploadApiOptions extends ApiOptions {
+  accessToken?: string;
   timeoutMs?: number;
 }
 
@@ -231,6 +232,7 @@ export const createToy = async ({
   imageUrl,
   objectKey,
   tries,
+  accessToken,
   timeoutMs = DefaultToyUploadTimeoutMs,
   ...apiOptions
 }: CreateToyRequest & ToyUploadApiOptions): Promise<Toy> => {
@@ -240,12 +242,17 @@ export const createToy = async ({
     throw setupError;
   }
 
+  if (!accessToken) {
+    throw new Error('Failed to save toy: missing access token');
+  }
+
   const endpoint = getCreateToyEndpoint(apiOptions);
   const response = await fetchWithTimeout(
     endpoint,
     {
       method: 'POST',
       headers: {
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

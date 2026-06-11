@@ -18,7 +18,7 @@ class ProfileRecord:
     id: str
     name: str
     handle: str
-    avatar_path: str
+    avatar_path: str | None
     toys: list[ProfileToyRecord]
 
 
@@ -45,7 +45,7 @@ class ProfileRepository:
             if user_row is None:
                 raise ProfileNotFoundError
 
-            toys = await self._list_uploaded_toys(connection)
+            toys = await self._list_uploaded_toys(connection, user_id)
         finally:
             await connection.close()
 
@@ -57,7 +57,54 @@ class ProfileRepository:
             toys=toys,
         )
 
-    async def list_uploaded_toys(self) -> list[ProfileToyRecord]:
+    async def update_avatar_path(self, user_id: str, avatar_path: str) -> ProfileRecord:
+        connection = await asyncpg.connect(self.settings.database_url)
+        try:
+            result = await connection.execute(
+                """
+                update users
+                set avatar_path = $2
+                where id = $1
+                """,
+                user_id,
+                avatar_path,
+            )
+
+            if result == "UPDATE 0":
+                raise ProfileNotFoundError
+
+            return await self._get_profile(connection, user_id)
+        finally:
+            await connection.close()
+
+    async def _get_profile(
+        self,
+        connection: asyncpg.Connection,
+        user_id: str,
+    ) -> ProfileRecord:
+        user_row = await connection.fetchrow(
+            """
+            select id, username, name, avatar_path
+            from users
+            where id = $1
+            """,
+            user_id,
+        )
+
+        if user_row is None:
+            raise ProfileNotFoundError
+
+        toys = await self._list_uploaded_toys(connection, user_id)
+
+        return ProfileRecord(
+            id=user_row["id"],
+            name=user_row["name"],
+            handle=f"@{user_row['username']}",
+            avatar_path=user_row["avatar_path"],
+            toys=toys,
+        )
+
+    async def list_uploaded_toys(self, user_id: str) -> list[ProfileToyRecord]:
         try:
             connection = await asyncpg.connect(self.settings.database_url)
         except (OSError, asyncpg.PostgresError):
@@ -68,8 +115,10 @@ class ProfileRepository:
                 """
                 select id, name, image_url
                 from toy
+                where user_id = $1
                 order by created_at desc
-                """
+                """,
+                user_id,
             )
         except asyncpg.PostgresError:
             return []
@@ -81,13 +130,16 @@ class ProfileRepository:
     async def _list_uploaded_toys(
         self,
         connection: asyncpg.Connection,
+        user_id: str,
     ) -> list[ProfileToyRecord]:
         rows = await connection.fetch(
             """
             select id, name, image_url
             from toy
+            where user_id = $1
             order by created_at desc
-            """
+            """,
+            user_id,
         )
 
         return self._toy_records(rows)

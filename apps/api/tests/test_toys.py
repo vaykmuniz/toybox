@@ -1,25 +1,59 @@
-from datetime import UTC, datetime
+import base64
+import hashlib
+import hmac
+import json
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import httpx
 import pytest
 from fastapi import HTTPException
 
-from toybox_api.config import Settings
+from toybox_api.config import Settings, get_settings
 from toybox_api.controllers import toys
 from toybox_api.main import app
 from toybox_api.repositories.toys import ToyRecord
 from toybox_api.services.toys import ToyService
-
 
 def api_client() -> httpx.AsyncClient:
     transport = httpx.ASGITransport(app=app)
     return httpx.AsyncClient(transport=transport, base_url="http://testserver")
 
 
+def encode_test_jwt(
+    *,
+    subject: str = "user-1",
+    expires_at: datetime | None = None,
+) -> str:
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "sub": subject,
+        "exp": int((expires_at or datetime.now(UTC) + timedelta(hours=1)).timestamp()),
+    }
+    header_text = base64url_json(header)
+    payload_text = base64url_json(payload)
+    signing_input = f"{header_text}.{payload_text}"
+    signature = hmac.new(
+        get_settings().jwt_secret_key.encode("utf-8"),
+        signing_input.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+
+    return f"{signing_input}.{base64url(signature)}"
+
+
+def base64url_json(value: dict[str, object]) -> str:
+    return base64url(json.dumps(value, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+
+
+def base64url(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+
 class FakeToyRepository:
     async def create_toy(
         self,
+        user_id: str,
         name: str,
         image_url: str,
         object_key: str,
@@ -27,6 +61,7 @@ class FakeToyRepository:
     ) -> ToyRecord:
         return ToyRecord(
             id=UUID("11111111-1111-1111-1111-111111111111"),
+            user_id=user_id,
             name=name,
             image_url=image_url,
             object_key=object_key,
@@ -43,7 +78,15 @@ class FakeToyService:
             "object_key": f"toys/{file_name}",
         }
 
-    async def create_toy(self, name: str, image_url: str, object_key: str, tries: int):
+    async def create_toy(
+        self,
+        user_id: str,
+        name: str,
+        image_url: str,
+        object_key: str,
+        tries: int,
+    ):
+        assert user_id == "user-1"
         return {
             "id": "11111111-1111-1111-1111-111111111111",
             "name": name,
@@ -91,6 +134,7 @@ async def test_create_toy_returns_saved_toy(monkeypatch: pytest.MonkeyPatch) -> 
     async with api_client() as client:
         response = await client.post(
             "/toys",
+            headers={"Authorization": f"Bearer {encode_test_jwt()}"},
             json={
                 "name": "Desk robot",
                 "image_url": "https://cdn.example.com/toys/robot.png",
@@ -111,6 +155,24 @@ async def test_create_toy_returns_saved_toy(monkeypatch: pytest.MonkeyPatch) -> 
     }
 
 
+async def test_create_toy_requires_bearer_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(toys, "service", FakeToyService())
+
+    async with api_client() as client:
+        response = await client.post(
+            "/toys",
+            json={
+                "name": "Desk robot",
+                "image_url": "https://cdn.example.com/toys/robot.png",
+                "object_key": "toys/robot.png",
+                "tries": 7,
+            },
+        )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing bearer token."}
+
+
 async def test_create_toy_service_persists_record() -> None:
     service = ToyService(
         settings=Settings(),
@@ -118,6 +180,7 @@ async def test_create_toy_service_persists_record() -> None:
     )
 
     toy = await service.create_toy(
+        user_id="user-1",
         name="  Desk robot  ",
         image_url="https://cdn.example.com/toys/robot.png",
         object_key="toys/robot.png",

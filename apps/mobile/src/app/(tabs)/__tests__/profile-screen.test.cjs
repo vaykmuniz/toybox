@@ -37,6 +37,21 @@ Module._load = function load(request, parent, isMain) {
     };
   }
 
+  if (request === 'expo-image-picker') {
+    return {
+      launchImageLibraryAsync: async () => ({ canceled: true, assets: [] }),
+    };
+  }
+
+  if (request === 'expo-image-manipulator') {
+    return {
+      manipulateAsync: async (uri) => ({ uri }),
+      SaveFormat: {
+        JPEG: 'jpeg',
+      },
+    };
+  }
+
   if (request === 'expo-secure-store') {
     return {
       deleteItemAsync: async () => {},
@@ -66,9 +81,30 @@ Module._load = function load(request, parent, isMain) {
     };
   }
 
+  if (request === '@/components/views/profile/profile-header-card.component') {
+    return {
+      ProfileHeaderCard: ({ onProfileUpdated, profile }) =>
+        React.createElement(
+          'View',
+          { onProfileUpdated, profile },
+          React.createElement(
+            'Pressable',
+            {
+              accessibilityRole: 'button',
+              onPress: () => routerCalls.push(['push', '/upload']),
+            },
+            React.createElement('Text', null, 'Upload')
+          )
+        ),
+    };
+  }
+
   if (request === 'react-native') {
     return {
       ActivityIndicator: (props) => React.createElement('ActivityIndicator', props),
+      Platform: {
+        OS: 'web',
+      },
       Pressable: (props) => React.createElement('Pressable', props),
       ScrollView: (props) => React.createElement('ScrollView', props),
       StyleSheet: {
@@ -130,11 +166,11 @@ const sampleProfile = {
   id: 'user-1',
   name: 'Toy Collector',
   handle: '@collector',
-  avatar_url: 'http://localhost:8000/static/mocks/avatar.png',
+  avatar_url: null,
   toys: [
     {
       id: 'toy-1',
-      media_url: 'http://localhost:8000/static/mocks/toy-1.png',
+      media_url: 'https://cdn.example.com/toys/toy-1.png',
       caption: 'Newest catch',
     },
   ],

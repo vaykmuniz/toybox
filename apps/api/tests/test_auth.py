@@ -8,6 +8,7 @@ import httpx
 import pytest
 from fastapi import HTTPException
 
+from toybox_api.config import get_settings
 from toybox_api.controllers import auth as auth_controller
 from toybox_api.main import app
 from toybox_api.models.auth import LoginRequest, RegisterRequest, VerifyRegisterRequest
@@ -22,7 +23,6 @@ from toybox_api.services.auth import AuthService
 from toybox_api.services.email import EmailDeliveryError
 
 FixedNow = datetime(2026, 6, 7, 12, 0, 0)
-JwtSecretKey = "toybox-local-development-secret"
 
 
 class FakeAuthRepository:
@@ -159,7 +159,7 @@ def decode_verified_jwt(token: str) -> dict[str, object]:
     header_text, payload_text, signature_text = token.split(".", 2)
     signing_input = f"{header_text}.{payload_text}"
     expected_signature = hmac.new(
-        JwtSecretKey.encode("utf-8"),
+        get_settings().jwt_secret_key.encode("utf-8"),
         signing_input.encode("utf-8"),
         hashlib.sha256,
     ).digest()

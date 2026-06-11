@@ -96,6 +96,7 @@ const Avatar = require('../avatar/avatar.component').default;
 const {
   avatarBaseClassName,
   avatarImageClassName,
+  avatarInitialsClassName,
   avatarSizeClassNames,
   avatarSizeStyles,
 } = require('../avatar/avatar.styles');
@@ -255,6 +256,20 @@ test('Avatar passes image props to CustomImage and keeps rounded image styles', 
   assert.equal(image.props.source, source);
   assert.equal(image.props.accessibilityLabel, 'Profile photo');
   assert.deepEqual(image.props.style, { opacity: 0.75 });
+});
+
+test('Avatar renders initials when source is missing', () => {
+  const element = Avatar({
+    accessibilityLabel: 'Profile photo',
+    initials: 'TC',
+    size: 'md',
+    source: null,
+  });
+  const text = getOnlyChild(element);
+
+  assert.equal(text.type.name, 'Text');
+  assert.equal(text.props.children, 'TC');
+  classNameIncludes(text.props.className, avatarInitialsClassName);
 });
 
 test('ProfileToyGrid renders toy captions visibly', () => {

@@ -68,7 +68,14 @@ Module._resolveFilename = function resolveFilename(request, parent, isMain, opti
   }
 };
 
-const { fetchProfile, getProfileEndpoint } = require('../profile-api');
+const {
+  createAvatarUploadUrl,
+  fetchProfile,
+  getAvatarUploadUrlEndpoint,
+  getProfileEndpoint,
+  getUpdateAvatarEndpoint,
+  updateAvatar,
+} = require('../profile-api');
 
 const test = async (name, fn) => {
   try {
@@ -110,16 +117,16 @@ const sampleProfile = {
   id: 'user-1',
   name: 'Toy Collector',
   handle: '@collector',
-  avatar_url: 'http://localhost:8000/static/mocks/avatar.png',
+  avatar_url: null,
   toys: [
     {
       id: 'toy-1',
-      media_url: 'http://localhost:8000/static/mocks/toy-1.png',
+      media_url: 'https://cdn.example.com/toys/toy-1.png',
       caption: 'Newest catch',
     },
     {
       id: 'toy-2',
-      media_url: 'http://localhost:8000/static/mocks/toy-2.png',
+      media_url: 'https://cdn.example.com/toys/toy-2.png',
       caption: 'Shelf favorite',
     },
   ],
@@ -171,7 +178,7 @@ const sampleProfile = {
     );
   });
 
-  await test('fetchProfile returns profile identity and static image URLs', async () => {
+  await test('fetchProfile returns profile identity and toy image URLs', async () => {
     await withFetch(
       async () => ({
         ok: true,
@@ -189,8 +196,88 @@ const sampleProfile = {
         assert.equal('bio' in profile, false);
         assert.equal('stats' in profile, false);
         assert.equal('badges' in profile, false);
-        assert.match(profile.avatar_url, /\/static\/mocks\/avatar\.png$/);
-        assert.match(profile.toys[0].media_url, /\/static\/mocks\/toy-1\.png$/);
+        assert.equal(profile.avatar_url, null);
+        assert.match(profile.toys[0].media_url, /\/toys\/toy-1\.png$/);
+      }
+    );
+  });
+
+  await test('avatar endpoints use the configured API URL', () => {
+    assert.equal(
+      getAvatarUploadUrlEndpoint({ apiUrl: 'http://192.168.1.20:8000/' }),
+      'http://192.168.1.20:8000/profile/avatar/upload-url'
+    );
+    assert.equal(
+      getUpdateAvatarEndpoint({ apiUrl: 'http://192.168.1.20:8000/' }),
+      'http://192.168.1.20:8000/profile/avatar'
+    );
+  });
+
+  await test('createAvatarUploadUrl posts file metadata with auth token', async () => {
+    const fetchCalls = [];
+
+    await withFetch(
+      async (url, options) => {
+        fetchCalls.push({ url, options });
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            upload_url: 'https://uploads.example.com/avatar.png',
+            object_url: 'https://cdn.example.com/avatars/user-1/avatar.png',
+            object_key: 'avatars/user-1/avatar.png',
+          }),
+        };
+      },
+      async () => {
+        const response = await createAvatarUploadUrl({
+          accessToken: 'signed.jwt.token',
+          apiUrl: 'http://localhost:8000',
+          fileName: 'avatar.png',
+          contentType: 'image/png',
+        });
+
+        assert.equal(fetchCalls[0].url, 'http://localhost:8000/profile/avatar/upload-url');
+        assert.equal(fetchCalls[0].options.headers.Authorization, 'Bearer signed.jwt.token');
+        assert.deepEqual(JSON.parse(fetchCalls[0].options.body), {
+          file_name: 'avatar.png',
+          content_type: 'image/png',
+        });
+        assert.equal(response.object_key, 'avatars/user-1/avatar.png');
+      }
+    );
+  });
+
+  await test('updateAvatar stores the avatar object key with auth token', async () => {
+    const fetchCalls = [];
+
+    await withFetch(
+      async (url, options) => {
+        fetchCalls.push({ url, options });
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...sampleProfile,
+            avatar_url: 'https://cdn.example.com/avatars/user-1/avatar.png',
+          }),
+        };
+      },
+      async () => {
+        const profile = await updateAvatar({
+          accessToken: 'signed.jwt.token',
+          apiUrl: 'http://localhost:8000',
+          objectKey: 'avatars/user-1/avatar.png',
+        });
+
+        assert.equal(fetchCalls[0].url, 'http://localhost:8000/profile/avatar');
+        assert.equal(fetchCalls[0].options.headers.Authorization, 'Bearer signed.jwt.token');
+        assert.deepEqual(JSON.parse(fetchCalls[0].options.body), {
+          object_key: 'avatars/user-1/avatar.png',
+        });
+        assert.equal(profile.avatar_url, 'https://cdn.example.com/avatars/user-1/avatar.png');
       }
     );
   });
