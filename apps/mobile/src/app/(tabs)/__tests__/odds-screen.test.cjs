@@ -94,14 +94,31 @@ const { default: OddsScreen } = require('../odds');
 const sampleCatches = [
   {
     id: 'toy-1',
-    name: 'Desk robot',
+    description: 'Desk robot',
     media_url: 'https://uploads.example.com/toys/robot.png?signature=test',
     tries: 7,
+    cost_per_try: 250,
+    caught: true,
     created_at: '2026-06-11T15:25:00',
     owner: {
       id: 'user-1',
       name: 'Toy Collector',
       handle: '@collector',
+      avatar_url: null,
+    },
+  },
+  {
+    id: 'toy-2',
+    description: 'Missed dragon',
+    media_url: null,
+    tries: 4,
+    cost_per_try: 125,
+    caught: false,
+    created_at: '2026-06-11T15:28:00',
+    owner: {
+      id: 'user-2',
+      name: null,
+      handle: '@curator',
       avatar_url: null,
     },
   },
@@ -147,7 +164,11 @@ test('OddsScreen renders last-hour recent catches', () => {
   assert.ok(text.includes('Desk robot'));
   assert.ok(text.includes('Toy Collector'));
   assert.ok(text.includes('@collector'));
-  assert.ok(text.includes('7 tries'));
+  assert.ok(text.includes('Caught | 7 tries | $2.50 each'));
+  assert.ok(text.includes('Missed dragon'));
+  assert.ok(text.includes('@curator'));
+  assert.ok(text.includes('No image'));
+  assert.ok(text.includes('Missed | 4 tries | $1.25 each'));
 });
 
 test('OddsScreen does not render a manual refresh button', () => {

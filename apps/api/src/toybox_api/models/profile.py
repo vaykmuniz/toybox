@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class CreateAvatarUploadUrl(BaseModel):
@@ -19,8 +18,11 @@ class UpdateAvatar(BaseModel):
 
 class ProfileToy(BaseModel):
     id: str
-    media_url: str
-    caption: str | None = None
+    media_url: str | None
+    description: str
+    tries: int
+    cost_per_try: int
+    caught: bool
 
 
 class GetProfile(BaseModel):

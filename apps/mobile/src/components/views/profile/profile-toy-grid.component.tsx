@@ -12,14 +12,16 @@ export function ProfileToyGrid({ toys }: ProfileToyGridProps) {
   return (
     <Card className="overflow-hidden p-0">
       <View className="flex-row items-center justify-between px-4 py-3">
-        <Text className="font-display text-lg font-bold text-ink">Your Toys</Text>
-        <Text className="font-display text-sm font-semibold text-ink/65">{toys.length} toys</Text>
+        <Text className="font-display text-lg font-bold text-ink">Your Attempts</Text>
+        <Text className="font-display text-sm font-semibold text-ink/65">
+          {toys.length} attempts
+        </Text>
       </View>
 
       {toys.length > 0 ? toys.map((toy) => <ToyOdds key={toy.id} toy={toy} />
       ) : (
         <View className="items-center justify-center px-6 py-16">
-          <Text className="font-display text-base font-semibold text-ink/65">No toys yet</Text>
+          <Text className="font-display text-base font-semibold text-ink/65">No attempts yet</Text>
         </View>
       )}
     </Card>

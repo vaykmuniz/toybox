@@ -171,7 +171,10 @@ const sampleProfile = {
     {
       id: 'toy-1',
       media_url: 'https://cdn.example.com/toys/toy-1.png',
-      caption: 'Newest catch',
+      description: 'Newest catch',
+      tries: 7,
+      cost_per_try: 250,
+      caught: true,
     },
   ],
 };

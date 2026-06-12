@@ -15,6 +15,7 @@ from toybox_api.main import app
 from toybox_api.repositories.toys import ToyRecord
 from toybox_api.services.toys import ToyService
 
+
 def api_client() -> httpx.AsyncClient:
     transport = httpx.ASGITransport(app=app)
     return httpx.AsyncClient(transport=transport, base_url="http://testserver")
@@ -54,18 +55,22 @@ class FakeToyRepository:
     async def create_toy(
         self,
         user_id: str,
-        name: str,
-        image_url: str,
-        object_key: str,
+        description: str,
+        image_url: str | None,
+        object_key: str | None,
         tries: int,
+        cost_per_try: int,
+        caught: bool,
     ) -> ToyRecord:
         return ToyRecord(
             id=UUID("11111111-1111-1111-1111-111111111111"),
             user_id=user_id,
-            name=name,
+            description=description,
             image_url=image_url,
             object_key=object_key,
             tries=tries,
+            cost_per_try=cost_per_try,
+            caught=caught,
             created_at=datetime(2026, 6, 7, 12, 0, tzinfo=UTC),
         )
 
@@ -81,18 +86,22 @@ class FakeToyService:
     async def create_toy(
         self,
         user_id: str,
-        name: str,
-        image_url: str,
-        object_key: str,
+        description: str,
+        image_url: str | None,
+        object_key: str | None,
         tries: int,
+        cost_per_try: int,
+        caught: bool,
     ):
         assert user_id == "user-1"
         return {
             "id": "11111111-1111-1111-1111-111111111111",
-            "name": name,
+            "description": description,
             "media_url": image_url,
             "object_key": object_key,
             "tries": tries,
+            "cost_per_try": cost_per_try,
+            "caught": caught,
             "created_at": "2026-06-07T12:00:00+00:00",
         }
 
@@ -136,10 +145,12 @@ async def test_create_toy_returns_saved_toy(monkeypatch: pytest.MonkeyPatch) -> 
             "/toys",
             headers={"Authorization": f"Bearer {encode_test_jwt()}"},
             json={
-                "name": "Desk robot",
+                "description": "Desk robot",
                 "image_url": "https://cdn.example.com/toys/robot.png",
                 "object_key": "toys/robot.png",
                 "tries": 7,
+                "cost_per_try": 250,
+                "caught": True,
             },
         )
 
@@ -147,12 +158,80 @@ async def test_create_toy_returns_saved_toy(monkeypatch: pytest.MonkeyPatch) -> 
     payload = response.json()
     assert payload == {
         "id": "11111111-1111-1111-1111-111111111111",
-        "name": "Desk robot",
+        "description": "Desk robot",
         "media_url": "https://cdn.example.com/toys/robot.png",
         "object_key": "toys/robot.png",
         "tries": 7,
+        "cost_per_try": 250,
+        "caught": True,
         "created_at": "2026-06-07T12:00:00+00:00",
     }
+
+
+async def test_create_toy_accepts_failed_attempt_without_media(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(toys, "service", FakeToyService())
+
+    async with api_client() as client:
+        response = await client.post(
+            "/toys",
+            headers={"Authorization": f"Bearer {encode_test_jwt()}"},
+            json={
+                "description": "Claw machine near entrance",
+                "tries": 4,
+                "cost_per_try": 100,
+                "caught": False,
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["description"] == "Claw machine near entrance"
+    assert payload["media_url"] is None
+    assert payload["object_key"] is None
+    assert payload["caught"] is False
+
+
+async def test_create_toy_rejects_caught_toy_without_media(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(toys, "service", FakeToyService())
+
+    async with api_client() as client:
+        response = await client.post(
+            "/toys",
+            headers={"Authorization": f"Bearer {encode_test_jwt()}"},
+            json={
+                "description": "Desk robot",
+                "tries": 7,
+                "cost_per_try": 250,
+                "caught": True,
+            },
+        )
+
+    assert response.status_code == 422
+
+
+async def test_create_toy_rejects_missing_cost(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(toys, "service", FakeToyService())
+
+    async with api_client() as client:
+        response = await client.post(
+            "/toys",
+            headers={"Authorization": f"Bearer {encode_test_jwt()}"},
+            json={
+                "description": "Desk robot",
+                "image_url": "https://cdn.example.com/toys/robot.png",
+                "object_key": "toys/robot.png",
+                "tries": 7,
+                "caught": True,
+            },
+        )
+
+    assert response.status_code == 422
 
 
 async def test_create_toy_requires_bearer_token(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -162,10 +241,12 @@ async def test_create_toy_requires_bearer_token(monkeypatch: pytest.MonkeyPatch)
         response = await client.post(
             "/toys",
             json={
-                "name": "Desk robot",
+                "description": "Desk robot",
                 "image_url": "https://cdn.example.com/toys/robot.png",
                 "object_key": "toys/robot.png",
                 "tries": 7,
+                "cost_per_try": 250,
+                "caught": True,
             },
         )
 
@@ -181,17 +262,21 @@ async def test_create_toy_service_persists_record() -> None:
 
     toy = await service.create_toy(
         user_id="user-1",
-        name="  Desk robot  ",
+        description="  Desk robot  ",
         image_url="https://cdn.example.com/toys/robot.png",
         object_key="toys/robot.png",
         tries=7,
+        cost_per_try=250,
+        caught=True,
     )
 
     assert toy.id == "11111111-1111-1111-1111-111111111111"
-    assert toy.name == "Desk robot"
+    assert toy.description == "Desk robot"
     assert toy.media_url == "https://cdn.example.com/toys/robot.png"
     assert toy.object_key == "toys/robot.png"
     assert toy.tries == 7
+    assert toy.cost_per_try == 250
+    assert toy.caught is True
 
 
 async def test_upload_url_uses_boto3_put_object_presign(monkeypatch: pytest.MonkeyPatch) -> None:

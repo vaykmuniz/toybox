@@ -12,9 +12,14 @@ from toybox_api.config import Settings, get_settings
 from toybox_api.controllers import profile as profile_controller
 from toybox_api.main import app
 from toybox_api.repositories import profile as profile_repository
-from toybox_api.repositories.profile import ProfileRecord, ProfileRepository, ProfileToyRecord
+from toybox_api.repositories.profile import (
+    ProfileRecord,
+    ProfileRepository,
+    ProfileToyRecord,
+)
 from toybox_api.services.authentication import AuthenticatedUser
 from toybox_api.services.profile import ProfileService
+
 
 def api_client() -> httpx.AsyncClient:
     transport = httpx.ASGITransport(app=app)
@@ -111,9 +116,21 @@ async def test_profile_returns_user_profile_from_database(monkeypatch) -> None:
             return [
                 {
                     "id": "11111111-1111-1111-1111-111111111111",
-                    "name": "Desk robot",
+                    "description": "Desk robot",
                     "image_url": "https://cdn.example.com/toys/robot.jpg",
                     "object_key": "toys/robot.jpg",
+                    "tries": 7,
+                    "cost_per_try": 250,
+                    "caught": True,
+                },
+                {
+                    "id": "22222222-2222-2222-2222-222222222222",
+                    "description": "Missed the claw machine",
+                    "image_url": None,
+                    "object_key": None,
+                    "tries": 4,
+                    "cost_per_try": 100,
+                    "caught": False,
                 }
             ]
 
@@ -142,8 +159,19 @@ async def test_profile_returns_user_profile_from_database(monkeypatch) -> None:
             {
                 "id": "11111111-1111-1111-1111-111111111111",
                 "media_url": "https://uploads.example.com/toys/robot.jpg?signature=test",
-                "caption": "Desk robot",
-            }
+                "description": "Desk robot",
+                "tries": 7,
+                "cost_per_try": 250,
+                "caught": True,
+            },
+            {
+                "id": "22222222-2222-2222-2222-222222222222",
+                "media_url": None,
+                "description": "Missed the claw machine",
+                "tries": 4,
+                "cost_per_try": 100,
+                "caught": False,
+            },
         ],
     }
     assert fake_s3_client.calls == [
@@ -191,7 +219,7 @@ async def test_feed_route_no_longer_exists() -> None:
     assert response.status_code == 404
 
 
-async def test_profile_uploaded_toy_name_is_returned_as_caption(monkeypatch) -> None:
+async def test_profile_uploaded_toy_description_is_returned(monkeypatch) -> None:
     class FakeConnection:
         async def fetch(self, query, user_id):
             assert "where user_id = $1" in query
@@ -200,9 +228,12 @@ async def test_profile_uploaded_toy_name_is_returned_as_caption(monkeypatch) -> 
             return [
                 {
                     "id": "11111111-1111-1111-1111-111111111111",
-                    "name": "Desk robot",
+                    "description": "Desk robot",
                     "image_url": "https://cdn.example.com/toys/robot.jpg",
                     "object_key": "toys/robot.jpg",
+                    "tries": 7,
+                    "cost_per_try": 250,
+                    "caught": True,
                 }
             ]
 
@@ -216,9 +247,12 @@ async def test_profile_uploaded_toy_name_is_returned_as_caption(monkeypatch) -> 
 
     toys = await ProfileRepository().list_uploaded_toys("user-1")
 
-    assert toys[0].caption == "Desk robot"
+    assert toys[0].description == "Desk robot"
     assert toys[0].media_path == "https://cdn.example.com/toys/robot.jpg"
     assert toys[0].object_key == "toys/robot.jpg"
+    assert toys[0].tries == 7
+    assert toys[0].cost_per_try == 250
+    assert toys[0].caught is True
     assert toys[0].is_absolute_url is True
 
 
@@ -235,7 +269,10 @@ async def test_profile_fails_when_toy_media_cannot_be_presigned() -> None:
                         id="11111111-1111-1111-1111-111111111111",
                         media_path="https://cdn.example.com/toys/robot.jpg",
                         object_key="toys/robot.jpg",
-                        caption="Desk robot",
+                        description="Desk robot",
+                        tries=7,
+                        cost_per_try=250,
+                        caught=True,
                         is_absolute_url=True,
                     )
                 ],
@@ -340,7 +377,9 @@ class FakeS3Client:
         return f"https://uploads.example.com/{Params['Key']}?signature=test"
 
 
-async def test_avatar_upload_url_uses_user_scoped_object_key(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_avatar_upload_url_uses_user_scoped_object_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_s3_client = FakeS3Client()
 
     monkeypatch.setattr(

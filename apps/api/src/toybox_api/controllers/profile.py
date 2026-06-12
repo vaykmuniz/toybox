@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends
 from fastapi.requests import Request
 
-from toybox_api.models.profile import AvatarUploadUrl, CreateAvatarUploadUrl, GetProfile, UpdateAvatar
+from toybox_api.models.profile import (
+    AvatarUploadUrl,
+    CreateAvatarUploadUrl,
+    GetProfile,
+    UpdateAvatar,
+)
 from toybox_api.services.authentication import AuthenticatedUser, get_authenticated_user
 from toybox_api.services.profile import ProfileService
 

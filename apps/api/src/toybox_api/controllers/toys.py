@@ -24,8 +24,10 @@ async def create_toy(
 ) -> Toy:
     return await service.create_toy(
         user_id=user.id,
-        name=payload.name,
+        description=payload.description,
         image_url=payload.image_url,
         object_key=payload.object_key,
         tries=payload.tries,
+        cost_per_try=payload.cost_per_try,
+        caught=payload.caught,
     )

@@ -19,18 +19,22 @@ export interface ToyUploadUrl {
 }
 
 export interface CreateToyRequest {
-  name: string;
-  imageUrl: string;
-  objectKey: string;
+  description: string;
+  imageUrl?: string | null;
+  objectKey?: string | null;
   tries: number;
+  costPerTry: number;
+  caught: boolean;
 }
 
 export interface Toy {
   id: string;
-  name: string;
-  media_url: string;
-  object_key: string;
+  description: string;
+  media_url: string | null;
+  object_key: string | null;
   tries: number;
+  cost_per_try: number;
+  caught: boolean;
   created_at: string;
 }
 
@@ -228,10 +232,12 @@ const uploadNativeToyFile = async ({
 };
 
 export const createToy = async ({
-  name,
+  description,
   imageUrl,
   objectKey,
   tries,
+  costPerTry,
+  caught,
   accessToken,
   timeoutMs = DefaultToyUploadTimeoutMs,
   ...apiOptions
@@ -256,10 +262,12 @@ export const createToy = async ({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name,
-        image_url: imageUrl,
-        object_key: objectKey,
+        description,
+        image_url: imageUrl ?? null,
+        object_key: objectKey ?? null,
         tries,
+        cost_per_try: costPerTry,
+        caught,
       }),
     },
     timeoutMs,
@@ -274,14 +282,15 @@ export const createToy = async ({
 };
 
 export const uploadToy = async ({
-  name,
+  description,
   tries,
+  costPerTry,
   fileName,
   contentType,
   file,
   ...apiOptions
 }: CreateToyUploadUrlRequest &
-  Omit<CreateToyRequest, 'imageUrl' | 'objectKey'> &
+  Omit<CreateToyRequest, 'imageUrl' | 'objectKey' | 'caught'> &
   ToyUploadApiOptions & {
     file: ToyUploadFile;
   }): Promise<Toy> => {
@@ -298,10 +307,12 @@ export const uploadToy = async ({
   });
 
   return createToy({
-    name,
+    description,
     imageUrl: uploadTarget.object_url,
     objectKey: uploadTarget.object_key,
     tries,
+    costPerTry,
+    caught: true,
     ...apiOptions,
   });
 };

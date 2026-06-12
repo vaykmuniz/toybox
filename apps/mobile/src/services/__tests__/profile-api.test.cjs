@@ -122,12 +122,18 @@ const sampleProfile = {
     {
       id: 'toy-1',
       media_url: 'https://cdn.example.com/toys/toy-1.png',
-      caption: 'Newest catch',
+      description: 'Newest catch',
+      tries: 7,
+      cost_per_try: 250,
+      caught: true,
     },
     {
       id: 'toy-2',
-      media_url: 'https://cdn.example.com/toys/toy-2.png',
-      caption: 'Shelf favorite',
+      media_url: null,
+      description: 'Missed claw machine',
+      tries: 4,
+      cost_per_try: 100,
+      caught: false,
     },
   ],
 };
@@ -198,6 +204,8 @@ const sampleProfile = {
         assert.equal('badges' in profile, false);
         assert.equal(profile.avatar_url, null);
         assert.match(profile.toys[0].media_url, /\/toys\/toy-1\.png$/);
+        assert.equal(profile.toys[1].media_url, null);
+        assert.equal(profile.toys[1].caught, false);
       }
     );
   });

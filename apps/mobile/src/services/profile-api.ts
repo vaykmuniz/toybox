@@ -17,8 +17,11 @@ export interface GetProfile {
 
 export interface Toy {
   id: string;
-  media_url: ProfileImageSource;
-  caption?: string;
+  media_url: ProfileImageSource | null;
+  description: string;
+  tries: number;
+  cost_per_try: number;
+  caught: boolean;
 }
 
 export type ProfileApiOptions = ApiOptions;

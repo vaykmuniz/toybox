@@ -11,23 +11,25 @@ type ToyCarouselProps = {
 };
 
 export function ToyCarousel({ size, toys }: ToyCarouselProps) {
+  const caughtToys = toys.filter((toy) => toy.caught && toy.media_url !== null);
+
   return (
     <View
       className="shrink-0 overflow-hidden rounded-2xl bg-white/25"
       style={{ height: size, width: size }}>
-      {toys.length > 0 ? (
+      {caughtToys.length > 0 ? (
         <Carousel
           autoPlay
           autoPlayInterval={2800}
-          data={toys}
+          data={caughtToys}
           height={size}
-          loop={toys.length > 1}
+          loop={caughtToys.length > 1}
           renderItem={({ item }) => (
             <View className="h-full w-full">
               <CustomImage
-                accessibilityLabel={item.caption ?? 'Toy'}
+                accessibilityLabel={item.description}
                 contentFit="cover"
-                source={item.media_url}
+                source={item.media_url ?? undefined}
               />
             </View>
           )}
@@ -36,7 +38,7 @@ export function ToyCarousel({ size, toys }: ToyCarouselProps) {
       ) : (
         <View className="h-full w-full items-center justify-center px-3">
           <CustomText className="text-center font-display text-xs font-bold text-white/70">
-            No toys
+            No catches
           </CustomText>
         </View>
       )}

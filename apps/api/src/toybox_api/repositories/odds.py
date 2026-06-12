@@ -18,9 +18,11 @@ class RecentCatchOwnerRecord:
 @dataclass(frozen=True)
 class RecentCatchRecord:
     id: UUID
-    name: str
-    object_key: str
+    description: str
+    object_key: str | None
     tries: int
+    cost_per_try: int
+    caught: bool
     created_at: datetime
     owner: RecentCatchOwnerRecord
 
@@ -36,9 +38,11 @@ class OddsRepository:
                 """
                 select
                     toy.id,
-                    toy.name,
+                    toy.description,
                     toy.object_key,
                     toy.tries,
+                    toy.cost_per_try,
+                    toy.caught,
                     toy.created_at,
                     users.id as owner_id,
                     users.name as owner_name,
@@ -56,9 +60,11 @@ class OddsRepository:
         return [
             RecentCatchRecord(
                 id=row["id"],
-                name=row["name"],
+                description=row["description"],
                 object_key=row["object_key"],
                 tries=row["tries"],
+                cost_per_try=row["cost_per_try"],
+                caught=row["caught"],
                 created_at=row["created_at"],
                 owner=RecentCatchOwnerRecord(
                     id=row["owner_id"],

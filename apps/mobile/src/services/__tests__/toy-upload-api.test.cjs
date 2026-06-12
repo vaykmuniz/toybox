@@ -195,10 +195,12 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           status: 200,
           json: async () => ({
             id: 'toy-1',
-            name: 'Desk robot',
+            description: 'Desk robot',
             media_url: 'https://cdn.example.com/toys/robot.png',
             object_key: 'toys/robot.png',
             tries: 7,
+            cost_per_try: 250,
+            caught: true,
             created_at: '2026-06-07T12:00:00+00:00',
           }),
         };
@@ -207,21 +209,72 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
         const toy = await createToy({
           apiUrl: 'http://localhost:8000',
           accessToken: 'token-1',
-          name: 'Desk robot',
+          description: 'Desk robot',
           imageUrl: 'https://cdn.example.com/toys/robot.png',
           objectKey: 'toys/robot.png',
           tries: 7,
+          costPerTry: 250,
+          caught: true,
         });
 
         assert.equal(fetchCalls[0].url, 'http://localhost:8000/toys');
         assert.equal(fetchCalls[0].options.headers.Authorization, 'Bearer token-1');
         assert.deepEqual(JSON.parse(fetchCalls[0].options.body), {
-          name: 'Desk robot',
+          description: 'Desk robot',
           image_url: 'https://cdn.example.com/toys/robot.png',
           object_key: 'toys/robot.png',
           tries: 7,
+          cost_per_try: 250,
+          caught: true,
         });
-        assert.equal(toy.name, 'Desk robot');
+        assert.equal(toy.description, 'Desk robot');
+      }
+    );
+  });
+
+  await test('createToy posts failed attempts without media', async () => {
+    const fetchCalls = [];
+
+    await withFetch(
+      async (url, options) => {
+        fetchCalls.push({ url, options });
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 'toy-2',
+            description: 'Missed claw machine',
+            media_url: null,
+            object_key: null,
+            tries: 4,
+            cost_per_try: 100,
+            caught: false,
+            created_at: '2026-06-07T12:00:00+00:00',
+          }),
+        };
+      },
+      async () => {
+        const toy = await createToy({
+          apiUrl: 'http://localhost:8000',
+          accessToken: 'token-1',
+          description: 'Missed claw machine',
+          tries: 4,
+          costPerTry: 100,
+          caught: false,
+        });
+
+        assert.equal(fetchCalls.length, 1);
+        assert.deepEqual(JSON.parse(fetchCalls[0].options.body), {
+          description: 'Missed claw machine',
+          image_url: null,
+          object_key: null,
+          tries: 4,
+          cost_per_try: 100,
+          caught: false,
+        });
+        assert.equal(toy.media_url, null);
+        assert.equal(toy.caught, false);
       }
     );
   });
@@ -331,10 +384,12 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           status: 200,
           json: async () => ({
             id: 'toy-1',
-            name: 'Desk robot',
+            description: 'Desk robot',
             media_url: 'https://cdn.example.com/toys/robot.png',
             object_key: 'toys/robot.png',
             tries: 7,
+            cost_per_try: 250,
+            caught: true,
             created_at: '2026-06-07T12:00:00+00:00',
           }),
         };
@@ -343,8 +398,9 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
         const toy = await uploadToy({
           apiUrl: 'http://localhost:8000',
           accessToken: 'token-1',
-          name: 'Desk robot',
+          description: 'Desk robot',
           tries: 7,
+          costPerTry: 250,
           fileName: 'robot.png',
           contentType: 'image/png',
           file: new Blob(['image'], { type: 'image/png' }),
@@ -361,6 +417,8 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
         assert.equal(fetchCalls[1].options.headers['Content-Type'], 'image/png');
         assert.equal(fetchCalls[2].options.headers.Authorization, 'Bearer token-1');
         assert.equal(JSON.parse(fetchCalls[2].options.body).tries, 7);
+        assert.equal(JSON.parse(fetchCalls[2].options.body).cost_per_try, 250);
+        assert.equal(JSON.parse(fetchCalls[2].options.body).caught, true);
         assert.equal(toy.media_url, 'https://cdn.example.com/toys/robot.png');
       }
     );
@@ -494,8 +552,9 @@ const withXMLHttpRequest = async (XMLHttpRequestImplementation, fn) => {
           () =>
             uploadToy({
               apiUrl: 'http://localhost:8000',
-              name: 'Desk robot',
+              description: 'Desk robot',
               tries: 7,
+              costPerTry: 250,
               fileName: 'robot.png',
               contentType: 'image/png',
               file: new Blob(['image'], { type: 'image/png' }),

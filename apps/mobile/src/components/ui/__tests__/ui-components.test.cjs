@@ -138,6 +138,31 @@ const collectTextChildren = (element, result = []) => {
   return result;
 };
 
+const collectElements = (element, result = []) => {
+  if (!element || typeof element !== 'object') {
+    return result;
+  }
+
+  if (typeof element.type === 'function') {
+    collectElements(element.type(element.props), result);
+    return result;
+  }
+
+  result.push(element);
+
+  React.Children.forEach(element.props?.children, (child) => {
+    collectElements(child, result);
+  });
+
+  return result;
+};
+
+const countElementsWithClass = (element, className) => {
+  return collectElements(element).filter((child) =>
+    typeof child.props?.className === 'string' && child.props.className.includes(className)
+  ).length;
+};
+
 const classNameIncludes = (actual, expected) => {
   for (const token of expected.split(' ')) {
     assert.match(actual, new RegExp(`(^| )${token.replace('/', '\\/')}( |$)`));
@@ -272,16 +297,37 @@ test('Avatar renders initials when source is missing', () => {
   classNameIncludes(text.props.className, avatarInitialsClassName);
 });
 
-test('ProfileToyGrid renders toy captions visibly', () => {
+test('ProfileToyGrid renders attempt descriptions visibly', () => {
   const element = ProfileToyGrid({
     toys: [
       {
         id: 'toy-1',
         media_url: { uri: 'https://example.test/robot.jpg' },
-        caption: 'Desk robot',
+        description: 'Desk robot',
+        tries: 7,
+        cost_per_try: 250,
+        caught: true,
+      },
+      {
+        id: 'toy-2',
+        media_url: null,
+        description: 'Missed dragon',
+        tries: 4,
+        cost_per_try: 125,
+        caught: false,
       },
     ],
   });
 
-  assert.deepEqual(collectTextChildren(element), ['Your Toys', '1 toys', 'Desk robot']);
+  assert.deepEqual(collectTextChildren(element), [
+    'Your Attempts',
+    '2 attempts',
+    'Desk robot',
+    'Caught | 7 tries | $2.50',
+    'No catch',
+    'Missed dragon',
+    'Missed | 4 tries | $1.25',
+  ]);
+  assert.equal(countElementsWithClass(element, 'overflow-hidden rounded-lg bg-white/45'), 2);
+  assert.equal(countElementsWithClass(element, 'bg-toybox-pink'), 1);
 });

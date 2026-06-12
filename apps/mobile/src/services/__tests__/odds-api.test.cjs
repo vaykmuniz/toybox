@@ -101,9 +101,11 @@ const withFetch = async (fetchImplementation, fn) => {
           json: async () => [
             {
               id: 'toy-1',
-              name: 'Desk robot',
+              description: 'Desk robot',
               media_url: 'https://uploads.example.com/toys/robot.png?signature=test',
               tries: 7,
+              cost_per_try: 250,
+              caught: true,
               created_at: '2026-06-11T15:25:00',
               owner: {
                 id: 'user-1',
@@ -125,7 +127,8 @@ const withFetch = async (fetchImplementation, fn) => {
         assert.deepEqual(fetchCalls[0].options.headers, {
           Authorization: 'Bearer signed.jwt.token',
         });
-        assert.equal(catches[0].name, 'Desk robot');
+        assert.equal(catches[0].description, 'Desk robot');
+        assert.equal(catches[0].cost_per_try, 250);
         assert.equal(catches[0].owner.handle, '@collector');
       }
     );

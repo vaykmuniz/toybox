@@ -15,9 +15,11 @@ export interface RecentCatchOwner {
 
 export interface RecentCatch {
   id: string;
-  name: string;
-  media_url: OddsImageSource;
+  description: string;
+  media_url: OddsImageSource | null;
   tries: number;
+  cost_per_try: number;
+  caught: boolean;
   created_at: string;
   owner: RecentCatchOwner;
 }

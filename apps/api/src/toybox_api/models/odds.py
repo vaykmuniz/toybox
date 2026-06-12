@@ -10,8 +10,10 @@ class RecentCatchOwner(BaseModel):
 
 class RecentCatch(BaseModel):
     id: str
-    name: str
-    media_url: str
+    description: str
+    media_url: str | None
     tries: int
+    cost_per_try: int
+    caught: bool
     created_at: str
     owner: RecentCatchOwner

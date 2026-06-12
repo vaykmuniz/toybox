@@ -160,14 +160,23 @@ class ProfileService:
         if not toys:
             return []
 
-        self._validate_s3_settings()
-        s3_client = self._s3_client()
+        s3_client = None
+        if any(toy.object_key for toy in toys):
+            self._validate_s3_settings()
+            s3_client = self._s3_client()
 
         return [
             ProfileToy(
                 id=toy.id,
-                media_url=self._presigned_object_url(s3_client, toy.object_key),
-                caption=toy.caption,
+                media_url=(
+                    self._presigned_object_url(s3_client, toy.object_key)
+                    if s3_client is not None and toy.object_key is not None
+                    else None
+                ),
+                description=toy.description,
+                tries=toy.tries,
+                cost_per_try=toy.cost_per_try,
+                caught=toy.caught,
             )
             for toy in toys
         ]

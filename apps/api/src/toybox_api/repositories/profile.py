@@ -8,9 +8,12 @@ from toybox_api.config import Settings, get_settings
 @dataclass(frozen=True)
 class ProfileToyRecord:
     id: str
-    media_path: str
-    object_key: str
-    caption: str | None = None
+    media_path: str | None
+    object_key: str | None
+    description: str
+    tries: int
+    cost_per_try: int
+    caught: bool
     is_absolute_url: bool = False
 
 
@@ -114,7 +117,7 @@ class ProfileRepository:
         try:
             rows = await connection.fetch(
                 """
-                select id, name, image_url, object_key
+                select id, description, image_url, object_key, tries, cost_per_try, caught
                 from toy
                 where user_id = $1
                 order by created_at desc
@@ -135,7 +138,7 @@ class ProfileRepository:
     ) -> list[ProfileToyRecord]:
         rows = await connection.fetch(
             """
-            select id, name, image_url, object_key
+            select id, description, image_url, object_key, tries, cost_per_try, caught
             from toy
             where user_id = $1
             order by created_at desc
@@ -151,7 +154,10 @@ class ProfileRepository:
                 id=str(row["id"]),
                 media_path=row["image_url"],
                 object_key=row["object_key"],
-                caption=row["name"],
+                description=row["description"],
+                tries=row["tries"],
+                cost_per_try=row["cost_per_try"],
+                caught=row["caught"],
                 is_absolute_url=True,
             )
             for row in rows

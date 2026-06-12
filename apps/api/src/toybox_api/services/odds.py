@@ -25,17 +25,26 @@ class OddsService:
         if not records:
             return []
 
-        self._validate_s3_settings()
-        s3_client = self._s3_client()
+        s3_client = None
+        needs_s3_client = any(
+            record.object_key or self._avatar_object_key_from_url(record.owner.avatar_url)
+            for record in records
+        )
+
+        if needs_s3_client:
+            self._validate_s3_settings()
+            s3_client = self._s3_client()
 
         return [self._recent_catch_response(s3_client, record) for record in records]
 
     def _recent_catch_response(self, s3_client, record: RecentCatchRecord) -> RecentCatch:
         return RecentCatch(
             id=str(record.id),
-            name=record.name,
-            media_url=self._presigned_object_url(s3_client, record.object_key),
+            description=record.description,
+            media_url=self._media_url(s3_client, record.object_key),
             tries=record.tries,
+            cost_per_try=record.cost_per_try,
+            caught=record.caught,
             created_at=record.created_at.isoformat(),
             owner=RecentCatchOwner(
                 id=record.owner.id,
@@ -44,6 +53,12 @@ class OddsService:
                 avatar_url=self._avatar_url(s3_client, record.owner.avatar_url),
             ),
         )
+
+    def _media_url(self, s3_client, object_key: str | None) -> str | None:
+        if object_key is None:
+            return None
+
+        return self._presigned_object_url(s3_client, object_key)
 
     def _avatar_url(self, s3_client, avatar_url: str | None) -> str | None:
         object_key = self._avatar_object_key_from_url(avatar_url)

@@ -82,25 +82,32 @@ class FakeOddsRepository:
 def recent_catch_record(
     *,
     id: str,
-    name: str,
-    object_key: str,
+    description: str,
+    object_key: str | None,
     tries: int,
+    cost_per_try: int = 250,
+    caught: bool = True,
     created_at: datetime,
     owner_id: str,
     owner_name: str,
     owner_username: str,
+    include_owner_avatar: bool = True,
 ) -> RecentCatchRecord:
     return RecentCatchRecord(
         id=UUID(id),
-        name=name,
+        description=description,
         object_key=object_key,
         tries=tries,
+        cost_per_try=cost_per_try,
+        caught=caught,
         created_at=created_at,
         owner=RecentCatchOwnerRecord(
             id=owner_id,
             name=owner_name,
             username=owner_username,
-            avatar_url=f"https://cdn.example.com/avatars/{owner_id}.png",
+            avatar_url=f"https://cdn.example.com/avatars/{owner_id}.png"
+            if include_owner_avatar
+            else None,
         ),
     )
 
@@ -121,9 +128,10 @@ async def test_recent_catches_returns_all_users_last_hour_catches(
         [
             recent_catch_record(
                 id="11111111-1111-1111-1111-111111111111",
-                name="Desk robot",
+                description="Desk robot",
                 object_key="toys/robot.png",
                 tries=7,
+                cost_per_try=250,
                 created_at=FixedNow - timedelta(minutes=5),
                 owner_id="user-1",
                 owner_name="Toy Collector",
@@ -131,9 +139,10 @@ async def test_recent_catches_returns_all_users_last_hour_catches(
             ),
             recent_catch_record(
                 id="22222222-2222-2222-2222-222222222222",
-                name="Shelf dragon",
+                description="Shelf dragon",
                 object_key="toys/dragon.png",
                 tries=3,
+                cost_per_try=125,
                 created_at=FixedNow - timedelta(minutes=45),
                 owner_id="user-2",
                 owner_name="Shelf Curator",
@@ -168,9 +177,11 @@ async def test_recent_catches_returns_all_users_last_hour_catches(
     assert response.json() == [
         {
             "id": "11111111-1111-1111-1111-111111111111",
-            "name": "Desk robot",
+            "description": "Desk robot",
             "media_url": "https://uploads.example.com/toys/robot.png?signature=test",
             "tries": 7,
+            "cost_per_try": 250,
+            "caught": True,
             "created_at": "2026-06-11T15:25:00",
             "owner": {
                 "id": "user-1",
@@ -181,9 +192,11 @@ async def test_recent_catches_returns_all_users_last_hour_catches(
         },
         {
             "id": "22222222-2222-2222-2222-222222222222",
-            "name": "Shelf dragon",
+            "description": "Shelf dragon",
             "media_url": "https://uploads.example.com/toys/dragon.png?signature=test",
             "tries": 3,
+            "cost_per_try": 125,
+            "caught": True,
             "created_at": "2026-06-11T14:45:00",
             "owner": {
                 "id": "user-2",
@@ -227,15 +240,19 @@ async def test_recent_catches_do_not_require_s3_when_empty() -> None:
     assert repository.calls == 1
 
 
-async def test_recent_catches_preserve_missing_owner_avatar(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_recent_catches_preserve_missing_owner_avatar(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_s3_client = FakeS3Client()
     repository = FakeOddsRepository(
         [
             RecentCatchRecord(
                 id=UUID("11111111-1111-1111-1111-111111111111"),
-                name="Desk robot",
+                description="Desk robot",
                 object_key="toys/robot.png",
                 tries=7,
+                cost_per_try=250,
+                caught=True,
                 created_at=FixedNow - timedelta(minutes=5),
                 owner=RecentCatchOwnerRecord(
                     id="user-1",
@@ -273,6 +290,33 @@ async def test_recent_catches_preserve_missing_owner_avatar(monkeypatch: pytest.
     ]
 
 
+async def test_recent_catches_include_failed_attempts_without_media() -> None:
+    repository = FakeOddsRepository(
+        [
+            recent_catch_record(
+                id="11111111-1111-1111-1111-111111111111",
+                description="Missed robot",
+                object_key=None,
+                tries=4,
+                cost_per_try=250,
+                caught=False,
+                created_at=FixedNow - timedelta(minutes=5),
+                owner_id="user-1",
+                owner_name="Toy Collector",
+                owner_username="collector",
+                include_owner_avatar=False,
+            )
+        ]
+    )
+    service = OddsService(settings=Settings(), repository=repository)
+
+    catches = await service.list_recent_catches()
+
+    assert catches[0].description == "Missed robot"
+    assert catches[0].media_url is None
+    assert catches[0].caught is False
+
+
 async def test_recent_catches_fail_when_media_cannot_be_presigned() -> None:
     service = OddsService(
         settings=Settings(
@@ -285,9 +329,10 @@ async def test_recent_catches_fail_when_media_cannot_be_presigned() -> None:
             [
                 recent_catch_record(
                     id="11111111-1111-1111-1111-111111111111",
-                    name="Desk robot",
+                    description="Desk robot",
                     object_key="toys/robot.png",
                     tries=7,
+                    cost_per_try=250,
                     created_at=FixedNow - timedelta(minutes=5),
                     owner_id="user-1",
                     owner_name="Toy Collector",
@@ -319,9 +364,11 @@ async def test_recent_catches_query_joins_all_users_and_filters_by_database_last
             return [
                 {
                     "id": UUID("11111111-1111-1111-1111-111111111111"),
-                    "name": "Desk robot",
+                    "description": "Desk robot",
                     "object_key": "toys/robot.png",
                     "tries": 7,
+                    "cost_per_try": 250,
+                    "caught": True,
                     "created_at": FixedNow - timedelta(minutes=5),
                     "owner_id": "user-1",
                     "owner_name": "Toy Collector",
@@ -330,9 +377,11 @@ async def test_recent_catches_query_joins_all_users_and_filters_by_database_last
                 },
                 {
                     "id": UUID("22222222-2222-2222-2222-222222222222"),
-                    "name": "Shelf dragon",
+                    "description": "Shelf dragon",
                     "object_key": "toys/dragon.png",
                     "tries": 3,
+                    "cost_per_try": 125,
+                    "caught": False,
                     "created_at": FixedNow - timedelta(minutes=15),
                     "owner_id": "user-2",
                     "owner_name": "Shelf Curator",
@@ -356,6 +405,8 @@ async def test_recent_catches_query_joins_all_users_and_filters_by_database_last
     normalized_query = " ".join(connection.query.split())
     assert "join users on users.id = toy.user_id" in normalized_query
     assert "toy.created_at >= current_timestamp - interval '1 hour'" in normalized_query
+    assert "toy.caught = true" not in normalized_query
     assert "toy.user_id = $" not in normalized_query
     assert connection.args == ()
     assert [catch.owner.id for catch in catches] == ["user-1", "user-2"]
+    assert [catch.caught for catch in catches] == [True, False]

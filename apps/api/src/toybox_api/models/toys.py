@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CreateToyUploadUrl(BaseModel):
@@ -13,16 +13,27 @@ class ToyUploadUrl(BaseModel):
 
 
 class CreateToy(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    image_url: str = Field(min_length=1)
-    object_key: str = Field(min_length=1)
+    description: str = Field(min_length=1, max_length=120)
+    image_url: str | None = Field(default=None, min_length=1)
+    object_key: str | None = Field(default=None, min_length=1)
     tries: int = Field(ge=1)
+    cost_per_try: int = Field(ge=0)
+    caught: bool
+
+    @model_validator(mode="after")
+    def validate_caught_media(self) -> "CreateToy":
+        if self.caught and (self.image_url is None or self.object_key is None):
+            raise ValueError("Caught toys require image_url and object_key.")
+
+        return self
 
 
 class Toy(BaseModel):
     id: str
-    name: str
-    media_url: str
-    object_key: str
+    description: str
+    media_url: str | None
+    object_key: str | None
     tries: int
+    cost_per_try: int
+    caught: bool
     created_at: str

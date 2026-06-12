@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -19,7 +20,7 @@ import { BottomTabInset } from '@/constants/layout';
 import { useAuthSession } from '@/hooks/use-auth-session.hook';
 import { useGetProfile } from '@/hooks/use-get-profile.hook';
 import { preparePickedToyImage } from '@/services/toy-upload-image';
-import { uploadToy, type ToyUploadFile } from '@/services/toy-upload-api';
+import { createToy, uploadToy, type ToyUploadFile } from '@/services/toy-upload-api';
 
 type PickedToyImage = {
   uri: string;
@@ -50,18 +51,48 @@ const getUploadFileFromImage = async (image: PickedToyImage): Promise<ToyUploadF
   };
 };
 
+const normalizeCostInput = (value: string) => {
+  const normalized = value.replace(',', '.').replace(/[^\d.]/g, '');
+  const [whole = '', ...rest] = normalized.split('.');
+  const cents = rest.join('').slice(0, 2);
+
+  return rest.length > 0 ? `${whole}.${cents}` : whole;
+};
+
+const parseCostToMinorUnits = (value: string) => {
+  const cleanValue = value.trim();
+
+  if (!/^\d+(\.\d{1,2})?$/.test(cleanValue)) {
+    return Number.NaN;
+  }
+
+  const [whole, cents = ''] = cleanValue.split('.');
+
+  return Number.parseInt(whole, 10) * 100 + Number.parseInt(cents.padEnd(2, '0'), 10);
+};
+
 export default function UploadScreen() {
   const { user } = useAuthSession();
   const profileRequest = useGetProfile();
-  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [tries, setTries] = useState('');
+  const [costPerTry, setCostPerTry] = useState('');
+  const [caught, setCaught] = useState(true);
   const [image, setImage] = useState<PickedToyImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPicking, setIsPicking] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const parsedTries = Number.parseInt(tries, 10);
+  const parsedCostPerTry = parseCostToMinorUnits(costPerTry);
   const hasValidTries = Number.isInteger(parsedTries) && parsedTries >= 1;
-  const canSubmit = name.trim().length > 0 && hasValidTries && image && !isUploading;
+  const hasValidCost = Number.isInteger(parsedCostPerTry) && parsedCostPerTry >= 0;
+  const hasRequiredImage = caught ? image !== null : true;
+  const canSubmit =
+    description.trim().length > 0 &&
+    hasValidTries &&
+    hasValidCost &&
+    hasRequiredImage &&
+    !isUploading;
 
   const pickImage = async () => {
     setError(null);
@@ -93,7 +124,7 @@ export default function UploadScreen() {
   };
 
   const submit = async () => {
-    if (!image || !canSubmit) {
+    if (!canSubmit) {
       return;
     }
 
@@ -101,19 +132,36 @@ export default function UploadScreen() {
     setIsUploading(true);
 
     try {
-      const file = await getUploadFileFromImage(image);
+      if (caught) {
+        if (!image) {
+          return;
+        }
 
-      await uploadToy({
-        name: name.trim(),
-        tries: parsedTries,
-        fileName: image.fileName,
-        contentType: image.contentType,
-        file,
-        accessToken: user?.access_token,
-      });
+        const file = await getUploadFileFromImage(image);
 
-      setName('');
+        await uploadToy({
+          description: description.trim(),
+          tries: parsedTries,
+          costPerTry: parsedCostPerTry,
+          fileName: image.fileName,
+          contentType: image.contentType,
+          file,
+          accessToken: user?.access_token,
+        });
+      } else {
+        await createToy({
+          description: description.trim(),
+          tries: parsedTries,
+          costPerTry: parsedCostPerTry,
+          caught: false,
+          accessToken: user?.access_token,
+        });
+      }
+
+      setDescription('');
       setTries('');
+      setCostPerTry('');
+      setCaught(true);
       setImage(null);
       await profileRequest.refetch();
       router.replace('/profile');
@@ -155,22 +203,42 @@ export default function UploadScreen() {
           ) : (
             <View className="gap-5">
               <View>
-                <Text className="font-display text-3xl font-bold text-white">Upload toy</Text>
+                <Text className="font-display text-3xl font-bold text-white">Add attempt</Text>
               </View>
 
               <View className="gap-4 rounded-lg bg-white p-4">
+                <View className="flex-row items-center justify-between gap-4 rounded-lg bg-ink/5 px-4 py-3">
+                  <View className="min-w-0 flex-1">
+                    <Text className="font-display text-sm font-bold text-ink">Caught toy</Text>
+                    <Text className="font-display text-xs font-semibold text-ink/55">
+                      {caught ? 'Image required' : 'Save without image'}
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="Caught toy"
+                    disabled={isUploading}
+                    onValueChange={(value) => {
+                      setCaught(value);
+                      if (!value) {
+                        setImage(null);
+                      }
+                    }}
+                    value={caught}
+                  />
+                </View>
+
                 <View className="gap-2">
-                  <Text className="font-display text-sm font-bold text-ink">Name</Text>
+                  <Text className="font-display text-sm font-bold text-ink">Description</Text>
                   <TextInput
-                    accessibilityLabel="Toy name"
-                    autoCapitalize="words"
+                    accessibilityLabel="Attempt description"
+                    autoCapitalize="sentences"
                     className="rounded-lg border border-ink/15 px-4 py-3 font-display text-base text-ink"
                     editable={!isUploading}
                     maxLength={120}
-                    onChangeText={setName}
-                    placeholder="Toy name"
+                    onChangeText={setDescription}
+                    placeholder="Toy or machine description"
                     placeholderTextColor="rgba(29, 25, 38, 0.45)"
-                    value={name}
+                    value={description}
                   />
                 </View>
 
@@ -192,37 +260,57 @@ export default function UploadScreen() {
                   />
                 </View>
 
-                <View className="gap-3">
-                  <Text className="font-display text-sm font-bold text-ink">Upload</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    className="items-center justify-center rounded-lg border border-dashed border-ink/25 bg-ink/5 p-4 active:opacity-70"
-                    disabled={isPicking || isUploading}
-                    onPress={pickImage}>
-                    {image ? (
-                      <View className="w-full gap-3">
-                        <View className="rounded-lg bg-ink/10" style={styles.previewFrame}>
-                          <Image
-                            accessibilityLabel="Selected toy image"
-                            contentFit="cover"
-                            source={{ uri: image.uri }}
-                            style={styles.previewImage}
-                          />
-                        </View>
-                        <Text className="text-center font-display text-sm font-bold text-ink">
-                          Change image
-                        </Text>
-                      </View>
-                    ) : (
-                      <View className="items-center gap-2 py-8">
-                        <Text className="font-display text-4xl font-bold text-ink">+</Text>
-                        <Text className="font-display text-sm font-bold text-ink">
-                          Choose image
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
+                <View className="gap-2">
+                  <Text className="font-display text-sm font-bold text-ink">Cost per try</Text>
+                  <TextInput
+                    accessibilityLabel="Cost per try"
+                    className="rounded-lg border border-ink/15 px-4 py-3 font-display text-base text-ink"
+                    editable={!isUploading}
+                    inputMode="decimal"
+                    keyboardType="decimal-pad"
+                    maxLength={8}
+                    onChangeText={(value) => {
+                      setCostPerTry(normalizeCostInput(value));
+                    }}
+                    placeholder="2.50"
+                    placeholderTextColor="rgba(29, 25, 38, 0.45)"
+                    value={costPerTry}
+                  />
                 </View>
+
+                {caught ? (
+                  <View className="gap-3">
+                    <Text className="font-display text-sm font-bold text-ink">Upload</Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      className="items-center justify-center rounded-lg border border-dashed border-ink/25 bg-ink/5 p-4 active:opacity-70"
+                      disabled={isPicking || isUploading}
+                      onPress={pickImage}>
+                      {image ? (
+                        <View className="w-full gap-3">
+                          <View className="rounded-lg bg-ink/10" style={styles.previewFrame}>
+                            <Image
+                              accessibilityLabel="Selected toy image"
+                              contentFit="cover"
+                              source={{ uri: image.uri }}
+                              style={styles.previewImage}
+                            />
+                          </View>
+                          <Text className="text-center font-display text-sm font-bold text-ink">
+                            Change image
+                          </Text>
+                        </View>
+                      ) : (
+                        <View className="items-center gap-2 py-8">
+                          <Text className="font-display text-4xl font-bold text-ink">+</Text>
+                          <Text className="font-display text-sm font-bold text-ink">
+                            Choose image
+                          </Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  </View>
+                ) : null}
 
                 {error ? (
                   <Text className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
@@ -242,7 +330,9 @@ export default function UploadScreen() {
                   {isUploading ? (
                     <ActivityIndicator color="white" />
                   ) : (
-                    <Text className="font-display text-sm font-bold text-white">Upload toy</Text>
+                    <Text className="font-display text-sm font-bold text-white">
+                      {caught ? 'Upload toy' : 'Save attempt'}
+                    </Text>
                   )}
                 </Pressable>
               </View>

@@ -26,6 +26,11 @@ export function ProfileHeaderCard({ className, profile }: ProfileHeaderCardProps
     router.push('/settings');
   };
 
+
+  const handleUpload = () => {
+    router.push('/upload');
+  };
+
   return (
     <Card className={`gap-3 ${className ? ` ${className}` : ''}`}>
       <View className="flex-row flex-wrap gap-4 items-center space-x-4">
@@ -49,6 +54,13 @@ export function ProfileHeaderCard({ className, profile }: ProfileHeaderCardProps
             {profile.handle}
           </Text>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          className="rounded-full bg-white px-4 py-2 w-fit"
+          onPress={handleUpload}>
+          <Text className="font-display text-sm font-bold text-ink">New attempt</Text>
+        </Pressable>
       </View>
     </Card>
   );
