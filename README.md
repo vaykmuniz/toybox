@@ -1,22 +1,69 @@
 # Toybox
 
-Full-stack local development sandbox with Expo React Native, FastAPI, Postgres, Docker Compose, and mise.
+Toybox is a mobile app for toy collectors to manage accounts, profiles, toy
+collections, discovery, and nearby opportunity signals in one place. The stack is
+an Expo React Native frontend backed by a FastAPI service, Postgres, Alembic
+migrations, object storage uploads, email verification, and Sentry observability.
 
-## Structure
+## Product
 
-- `apps/mobile`: Expo React Native app.
-- `apps/api`: FastAPI app.
-- `apps/migrations`: standalone Alembic migration project.
+Toybox helps collectors:
+
+- Create and verify an account.
+- Maintain a collector profile.
+- Add toys with images.
+- Browse collection and discovery surfaces.
+- View odds and recent catch context.
+- Upload toy and avatar media through presigned object storage URLs.
+
+See [PRODUCT.md](PRODUCT.md) for the product rules and user-facing behavior.
+
+## Schema
+
+```mermaid
+flowchart TD
+  User[Collector] --> Mobile[Expo React Native frontend]
+  Mobile --> Services[Mobile service modules]
+  Services --> API[FastAPI API]
+
+  API --> Controllers[Controllers]
+  Controllers --> AppServices[Application services]
+  AppServices --> Repositories[Repositories]
+  Repositories --> DB[(Postgres)]
+
+  Migrations[Alembic migrations] --> DB
+
+  AppServices --> S3[S3-compatible object storage]
+  AppServices --> Email[Resend email verification]
+
+  Mobile --> MobileSentry[Sentry React Native]
+  API --> ApiSentry[Sentry Python SDK]
+  MobileSentry --> Sentry[Sentry]
+  ApiSentry --> Sentry
+
+  API --> Static[Static assets]
+  Static --> Mobile
+```
+
+## Stack
+
+- `apps/mobile`: Expo React Native app with Expo Router, NativeWind, service
+  modules, hooks, and Sentry React Native.
+- `apps/api`: FastAPI app with controller, service, repository, and Pydantic
+  model layers.
+- `apps/migrations`: standalone Alembic project for Postgres schema changes.
 - `docker-compose.yml`: local Postgres service.
-- `.mise.toml`: shared tools, env defaults, and runnable tasks.
-- `CODEX.md`: agent-facing project context and conventions.
+- `.mise.toml`: pinned tools, local defaults, and project tasks.
+
+Deeper implementation notes live in [ARCHITECTURE.md](ARCHITECTURE.md) and
+[INTEGRATIONS.md](INTEGRATIONS.md).
 
 ## Prerequisites
 
-- mise
+- `mise`
 - Docker with Docker Compose
 
-The pinned Node, pnpm, Python, and uv versions are managed through mise.
+Node, pnpm, Python, and uv versions are pinned through mise.
 
 ## Setup
 
@@ -25,85 +72,72 @@ mise install
 mise run install
 ```
 
-Copy `.env.example` to `.env` only when you need to override defaults. The mise defaults are enough for local development.
+The mise defaults are enough for local development. Copy `.env.example` to
+`.env` when you need credentials or overrides for database, API URLs, S3, Resend,
+JWT, or Sentry settings.
 
 ## Run Locally
 
-Start Postgres:
+Start Postgres and apply migrations:
 
 ```bash
 mise run db:up
+mise run db:migrate
 ```
 
-Run the API:
-
-```bash
-mise run dev:api
-```
-
-Run the mobile app:
-
-```bash
-mise run dev:mobile
-```
-
-Run the mobile app from Expo Go on a physical phone over LAN:
-
-```bash
-EXPO_LAN_IP=192.168.1.20 mise run dev:mobile:lan
-```
-
-Replace `192.168.1.20` with your computer's LAN IP. In WSL, use the Windows host
-LAN IP that your phone can reach, not `localhost` and usually not the WSL-only IP.
-The LAN task also sets `EXPO_PUBLIC_API_URL` to `http://$EXPO_LAN_IP:8000`, so
-mobile API requests do not point at the phone's own `localhost`. It starts Expo
-in LAN mode, so the QR code should show a LAN URL instead of an `exp.direct`
-tunnel URL.
-
-Before opening the app on the phone, confirm the API is reachable from the phone
-browser:
-
-```bash
-http://192.168.1.20:8000/health
-```
-
-If that URL does not return JSON on the phone, fix the LAN IP, firewall, router,
-or WSL port forwarding first; the app cannot load the feed until the phone can
-reach the API.
-
-Do not use the Expo tunnel host, such as `*.exp.direct`, as the API host. The
-tunnel points the phone at Metro on port `8081`; it does not expose FastAPI on
-port `8000`.
-
-For Android emulator networking, use the emulator host alias instead:
-
-```bash
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 mise run dev:mobile
-```
-
-Or run the stack together:
+Run the full stack:
 
 ```bash
 mise run dev
 ```
 
-For the full stack with a physical phone, use the LAN task instead:
+Run services separately:
+
+```bash
+mise run dev:api
+mise run dev:mobile
+```
+
+Run the full stack for Expo Go on a physical phone over LAN:
 
 ```bash
 EXPO_LAN_IP=192.168.1.20 mise run dev:lan
 ```
 
-If React Native DevTools fails in WSL with a missing `libnspr4.so`, install the
-Ubuntu libraries needed by the bundled Electron/Chromium shell:
+Replace `192.168.1.20` with the computer LAN IP that the phone can reach. In
+WSL, use the Windows host LAN IP rather than `localhost`.
+
+For Android emulator networking:
 
 ```bash
-sudo apt update
-sudo apt install -y libnss3 libasound2
+EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 mise run dev:mobile
 ```
 
-After installing, restart Expo. If API requests fail with `Unexpected token '<'`,
-open `http://<your-computer-lan-ip>:8000/health` from the phone browser; it should
-return JSON.
+## Local URLs
+
+- FastAPI: `http://localhost:8000`
+- API health: `http://localhost:8000/health`
+- API database health: `http://localhost:8000/health/db`
+- Sentry debug route: `http://localhost:8000/sentry-debug`
+- Postgres: `localhost:5432`
+
+## Configuration
+
+Common local settings:
+
+- `DATABASE_URL`: FastAPI and Alembic Postgres connection string.
+- `EXPO_PUBLIC_API_URL`: mobile client API base URL.
+- `API_PUBLIC_URL`: public API URL used when generating links.
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
+  `AWS_BUCKET_NAME`: S3 upload credentials.
+- `S3_ENDPOINT_URL`, `S3_PUBLIC_BASE_URL`: optional S3-compatible endpoint and
+  public URL overrides.
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`: account verification email delivery.
+- `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`: auth
+  token settings.
+- `SENTRY_DSN`, `SENTRY_SEND_DEFAULT_PII`, `SENTRY_TRACES_SAMPLE_RATE`,
+  `SENTRY_ENABLE_LOGS`: FastAPI Sentry settings.
+- `EXPO_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`: mobile Sentry settings.
 
 ## Checks
 
@@ -112,25 +146,8 @@ mise run test
 mise run lint
 ```
 
-## Local URLs
-
-- FastAPI: `http://localhost:8000`
-- API health: `http://localhost:8000/health`
-- API database health: `http://localhost:8000/health/db`
-- Postgres: `localhost:5432`
-
-## S3 Uploads
-
-Toy uploads use presigned S3 URLs. Set these in `.env` before using the upload
-screen:
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
-- `AWS_BUCKET_NAME`
-- `S3_ENDPOINT_URL` for S3-compatible local or third-party storage, optional
-- `S3_PUBLIC_BASE_URL` when public file URLs should use a CDN or custom domain,
-  optional
+For documentation-only changes, runtime tests are usually unnecessary, but keep
+commands, paths, and environment names synchronized with the repo.
 
 ## Database
 
@@ -146,24 +163,21 @@ Reset local data:
 mise run db:reset
 ```
 
-## Migrations
-
-Alembic lives in its own monorepo project at `apps/migrations`; keep migration dependencies and files there instead of mixing them into the FastAPI app.
-
-Create a migration:
+Migration commands:
 
 ```bash
 MESSAGE="create users" mise run db:revision
-```
-
-Apply migrations:
-
-```bash
 mise run db:migrate
-```
-
-Show the current database revision:
-
-```bash
 mise run db:current
 ```
+
+## Project Docs
+
+- [PRODUCT.md](PRODUCT.md): product behavior and domain rules.
+- [ARCHITECTURE.md](ARCHITECTURE.md): backend layering, database access, and
+  mobile import conventions.
+- [INTEGRATIONS.md](INTEGRATIONS.md): mobile/API integration patterns.
+- [apps/api/README.md](apps/api/README.md): API notes.
+- [apps/mobile/README.md](apps/mobile/README.md): mobile app notes.
+- [apps/migrations/README.md](apps/migrations/README.md): migration project
+  commands.
