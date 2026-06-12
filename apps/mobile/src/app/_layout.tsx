@@ -1,5 +1,6 @@
 import '@/global.css';
 
+import * as Sentry from '@sentry/react-native';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import {
@@ -12,7 +13,15 @@ import { AnimatedSplashOverlay } from '@/components/animated-splash-overlay/anim
 import { configureDefaultFonts } from '@/constants/setup-fonts';
 import { AuthProvider } from '@/hooks/use-auth-session.hook';
 
-export default function RootLayout() {
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: Boolean(sentryDsn),
+  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+});
+
+function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     Fredoka_400Regular,
@@ -39,3 +48,5 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

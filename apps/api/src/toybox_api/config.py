@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "toybox-local-development-secret"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60
+    sentry_dsn: str = ""
+    sentry_send_default_pii: bool = False
+    sentry_traces_sample_rate: float = 1.0
+    sentry_enable_logs: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
